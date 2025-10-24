@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Continuous Testing Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .running { background-color: #e3f2fd; border-left: 4px solid #2196f3; }
+        .idle { background-color: #f3e5f5; border-left: 4px solid #9c27b0; }
+        .metric { display: inline-block; margin: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px; }
+        .test-history { margin-top: 20px; }
+        .test-item { padding: 5px; margin: 5px 0; border-left: 3px solid #ccc; }
+        .success { border-left-color: #4caf50; }
+        .failed { border-left-color: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Continuous Testing Dashboard</h1>
+    
+    <div class="status idle">
+        <h2>Status: IDLE</h2>
+        <p>Schedule: Enabled (3600s interval)</p>
+    </div>
+
+    <div class="metrics">
+        <div class="metric">
+            <h3>Total Tests</h3>
+            <p>0</p>
+        </div>
+        <div class="metric">
+            <h3>Success Rate</h3>
+            <p>0.0%</p>
+        </div>
+        <div class="metric">
+            <h3>Average Duration</h3>
+            <p>0.00s</p>
+        </div>
+    </div>
+
+    <div class="test-history">
+        <h2>Recent Test History</h2>
+        
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(() => location.reload(), 30000);
+    </script>
+</body>
+</html>
