@@ -31,7 +31,8 @@ import {
   Logout,
   People,
   Search,
-  QrCode
+  QrCode,
+  TrendingUp
 } from '@mui/icons-material';
 import {
   useNavigate,
@@ -53,6 +54,7 @@ const menuItems = [
   { text: 'Purchase Orders', icon: <ShoppingCart />, path: '/purchase-orders' },
   { text: 'Barcodes', icon: <QrCode />, path: '/barcodes' },
   { text: 'Reports', icon: <Assessment />, path: '/reports' },
+  { text: 'Analytics', icon: <TrendingUp />, path: '/analytics' },
   { text: 'Users', icon: <People />, path: '/users', adminOnly: true }
 ];
 

@@ -19,7 +19,8 @@ import {
   Person,
   Visibility,
   VisibilityOff,
-  Business
+  Business,
+  AccountCircle
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -64,7 +65,7 @@ const Login = () => {
     setLoading(true);
     setError('');
 
-    const result = await login(formData.email, formData.password);
+    const result = await login(formData.username, formData.password);
     
     if (!result.success) {
       setError(result.error);
@@ -137,17 +138,16 @@ const Login = () => {
             <Box component="form" onSubmit={handleLogin}>
               <TextField
                 fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
+                label="Username"
+                name="username"
+                value={formData.username}
                 onChange={handleInputChange}
                 margin="normal"
                 required
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Email />
+                      <AccountCircle />
                     </InputAdornment>
                   ),
                 }}

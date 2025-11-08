@@ -7,7 +7,7 @@ const socketIo = require('socket.io');
 require('dotenv').config();
 
 const { syncDatabase } = require('./models');
-const { getSequelize } = require('./config/database');
+const sequelize = require('./config/database');
 
 // Import routes from organized structure
 const { 
@@ -26,7 +26,8 @@ const io = socketIo(server, {
       process.env.CLIENT_URL || "http://localhost:3000",
       "http://192.168.20.69:3000",
       "http://localhost:3000",
-      "http://127.0.0.1:3000"
+      "http://127.0.0.1:3000",
+      "http://192.168.110.235:3000"
     ],
     methods: ["GET", "POST"]
   }
@@ -135,6 +136,7 @@ app.use('/api/purchase-orders', managementRoutes.purchaseOrderRoutes);
 // Reports routes
 app.use('/api/reports', reportRoutes.reportRoutes);
 app.use('/api/search', reportRoutes.searchRoutes);
+app.use('/api/analytics', reportRoutes.analyticsRoutes);
 
 // Utility routes
 app.use('/api/uploads', uploadRoutes);
@@ -169,8 +171,8 @@ const startServer = async () => {
   try {
     // Initialize database connection
     try {
-      const sequelize = await getSequelize();
-      console.log('✅ Database connection established');
+      await sequelize.authenticate();
+      console.log('✅ MySQL database connected successfully');
       
       // Sync database schema
       await syncDatabase();
@@ -186,23 +188,24 @@ const startServer = async () => {
         console.log('📝 Server will continue without default data setup');
       }
     } catch (dbError) {
-      console.warn('⚠️  Database connection failed:', dbError.message);
-      console.log('📝 Server will start without database connection');
-      console.log('💡 To fix this:');
-      console.log('   1. Install MySQL server');
-      console.log('   2. Start MySQL service');
-      console.log('   3. Check database credentials in .env file');
-      console.log('   4. Create database: CREATE DATABASE inventory_db;');
-      console.log('   5. Fix authentication: ALTER USER "root"@"localhost" IDENTIFIED WITH mysql_native_password BY "root";');
+      console.error('❌ MySQL connection failed:', dbError.message);
+      console.error('💡 To fix this:');
+      console.error('   1. Ensure MySQL server is installed and running');
+      console.error('   2. Create the database: CREATE DATABASE inventory_db;');
+      console.error('   3. Create .env file in server folder with your MySQL credentials');
+      console.error('   4. Fix authentication: ALTER USER "root"@"localhost" IDENTIFIED WITH mysql_native_password BY "root";');
+      console.error('   5. Update DB_PASSWORD in .env to match your MySQL password');
+      throw dbError; // Stop server if MySQL connection fails
     }
     
     // Try to start server on specified port, fallback to other ports if needed
     const startOnPort = async (port) => {
       return new Promise((resolve, reject) => {
-        const testServer = server.listen(port, () => {
+        const testServer = server.listen(port, '0.0.0.0', () => {
           console.log(`🚀 Server running on port ${port}`);
           console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
           console.log(`📡 API available at: http://localhost:${port}`);
+          console.log(`📱 Network access: http://192.168.110.235:${port}`);
           resolve(port);
         });
         

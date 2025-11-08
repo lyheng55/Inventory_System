@@ -76,27 +76,27 @@ const Stock = () => {
     }
   );
 
-  const { data: products } = useQuery(
+  const { data: products = [] } = useQuery(
     'products',
     async () => {
       const response = await axios.get('/products?limit=1000');
-      return response.data.products;
+      return response.data?.products || [];
     }
   );
 
-  const { data: warehouses } = useQuery(
+  const { data: warehouses = [] } = useQuery(
     'warehouses',
     async () => {
       const response = await axios.get('/warehouses');
-      return response.data;
+      return response.data || [];
     }
   );
 
-  const { data: lowStockAlerts } = useQuery(
+  const { data: lowStockAlerts = [] } = useQuery(
     'lowStockAlerts',
     async () => {
       const response = await axios.get('/stock/alerts/low-stock');
-      return response.data.alerts;
+      return response.data?.alerts || [];
     }
   );
 

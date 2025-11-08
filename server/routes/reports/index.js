@@ -1,5 +1,6 @@
 // Reports routes exports
 module.exports = {
   reportRoutes: require('./reports'),
-  searchRoutes: require('./search')
+  searchRoutes: require('./search'),
+  analyticsRoutes: require('./analytics')
 };

@@ -6,7 +6,7 @@ console.log('📝 Using MySQL database');
 const sequelize = new Sequelize(
   process.env.DB_NAME || 'inventory_db',
   process.env.DB_USER || 'root',
-  process.env.DB_PASSWORD || '',
+  process.env.DB_PASSWORD || '@dm!n',
   {
     host: process.env.DB_HOST || 'localhost',
     dialect: 'mysql',

@@ -61,10 +61,10 @@ router.post('/register', validateRequest(userRegistrationSchema), async (req, re
 // Login user
 router.post('/login', validateRequest(userLoginSchema), async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
     // For testing purposes, allow test user without database
-    if (email === 'test@example.com' && password === 'Test123!') {
+    if (username === 'testuser' && password === 'Test123!') {
       const token = jwt.sign(
         { userId: 1, role: 'sales_staff' },
         process.env.JWT_SECRET || 'fallback-secret-key-for-testing',
@@ -86,8 +86,8 @@ router.post('/login', validateRequest(userLoginSchema), async (req, res) => {
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({ where: { email } });
+    // Find user by username
+    const user = await User.findOne({ where: { username } });
 
     if (!user || !user.isActive) {
       return res.status(401).json({ error: 'Invalid credentials' });

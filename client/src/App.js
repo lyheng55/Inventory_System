@@ -14,6 +14,7 @@ import {
   Warehouses, 
   PurchaseOrders, 
   Reports, 
+  Analytics,
   Profile, 
   Users, 
   Search as SearchPage, 
@@ -49,6 +50,7 @@ function App() {
             <Route path="/warehouses" element={<Warehouses />} />
             <Route path="/purchase-orders" element={<PurchaseOrders />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/users" element={<Users />} />
             <Route path="/search" element={<SearchPage />} />

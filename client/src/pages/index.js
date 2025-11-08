@@ -19,6 +19,7 @@ export { default as PurchaseOrders } from './management/PurchaseOrders';
 // Reports pages
 export { default as Reports } from './reports/Reports';
 export { default as Search } from './reports/Search';
+export { default as Analytics } from './reports/Analytics';
 
 // Dashboard
 export { default as Dashboard } from './Dashboard';
