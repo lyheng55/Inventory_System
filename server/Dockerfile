@@ -20,7 +20,7 @@ EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node healthcheck.js
+  CMD node scripts/utilities/healthcheck.js
 
 # Start the application
 CMD ["npm", "start"]

@@ -7,6 +7,14 @@ const realtimeService = require('../../services/realtimeService');
 
 const router = express.Router();
 
+// Test endpoint to verify route is accessible
+router.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Stock route is working',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Get all stock with filters
 router.get('/', authenticateToken, async (req, res) => {
   try {
@@ -101,37 +109,63 @@ router.get('/product/:productId', authenticateToken, async (req, res) => {
 
 // Adjust stock quantity
 router.post('/adjust', authenticateToken, requireStaff, validateRequest(stockAdjustmentSchema), async (req, res) => {
+  console.log('📦 Stock adjustment request received:', {
+    productId: req.body.productId,
+    warehouseId: req.body.warehouseId,
+    quantity: req.body.quantity,
+    userId: req.user?.id
+  });
+  
+  const transaction = await Stock.sequelize.transaction();
+  
   try {
     const { productId, warehouseId, quantity, reason, notes, location, expiryDate, batchNumber } = req.body;
 
-    // Find or create stock record
+    // Normalize empty strings to null for optional fields
+    const normalizedLocation = location && location.trim() !== '' ? location.trim() : null;
+    const normalizedBatchNumber = batchNumber && batchNumber.trim() !== '' ? batchNumber.trim() : null;
+    const normalizedExpiryDate = expiryDate || null;
+
+    // Find existing stock record (only by productId and warehouseId, as these are the unique constraint)
     let stock = await Stock.findOne({
-      where: { productId, warehouseId, location, batchNumber }
+      where: { 
+        productId, 
+        warehouseId
+      },
+      transaction
     });
 
     const previousQuantity = stock ? stock.quantity : 0;
     const newQuantity = previousQuantity + quantity;
 
     if (newQuantity < 0) {
+      await transaction.rollback();
       return res.status(400).json({ error: 'Insufficient stock for this adjustment' });
     }
 
     // Create or update stock
     if (stock) {
-      await stock.update({ quantity: newQuantity });
+      // Update existing stock, optionally update location/batch/expiry if provided
+      const updateData = { quantity: newQuantity };
+      if (normalizedLocation !== null) updateData.location = normalizedLocation;
+      if (normalizedBatchNumber !== null) updateData.batchNumber = normalizedBatchNumber;
+      if (normalizedExpiryDate !== null) updateData.expiryDate = normalizedExpiryDate;
+      
+      await stock.update(updateData, { transaction });
     } else {
+      // Create new stock record
       stock = await Stock.create({
         productId,
         warehouseId,
         quantity: newQuantity,
-        location,
-        expiryDate,
-        batchNumber
-      });
+        location: normalizedLocation,
+        expiryDate: normalizedExpiryDate,
+        batchNumber: normalizedBatchNumber
+      }, { transaction });
     }
 
     // Record stock movement
-    const movement = await StockMovement.create({
+    await StockMovement.create({
       productId,
       warehouseId,
       movementType: quantity > 0 ? 'in' : 'out',
@@ -139,49 +173,90 @@ router.post('/adjust', authenticateToken, requireStaff, validateRequest(stockAdj
       previousQuantity,
       newQuantity,
       referenceType: 'adjustment',
-      reason,
-      notes,
+      reason: reason || 'Stock adjustment',
+      notes: notes || null,
       performedBy: req.user.id
-    });
+    }, { transaction });
 
-    // Emit real-time stock update
-    realtimeService.emitStockUpdate(
-      productId,
-      warehouseId,
-      newQuantity,
-      previousQuantity,
-      quantity > 0 ? 'in' : 'out'
-    );
+    await transaction.commit();
 
-    // Check for low stock alert
-    const product = await Product.findByPk(productId);
-    if (product && newQuantity <= product.reorderPoint) {
-      realtimeService.emitLowStockAlert(
+    // Operations after transaction commit (these should not cause transaction rollback)
+    try {
+      // Emit real-time stock update
+      realtimeService.emitStockUpdate(
         productId,
-        product.name,
+        warehouseId,
         newQuantity,
-        product.reorderPoint,
-        warehouseId
+        previousQuantity,
+        quantity > 0 ? 'in' : 'out'
       );
-    }
 
-    res.json({
-      message: 'Stock adjusted successfully',
-      stock: {
-        ...stock.toJSON(),
-        availableQuantity: stock.availableQuantity
+      // Check for low stock alert
+      const product = await Product.findByPk(productId);
+      if (product && newQuantity <= product.reorderPoint) {
+        realtimeService.emitLowStockAlert(
+          productId,
+          product.name,
+          newQuantity,
+          product.reorderPoint,
+          warehouseId
+        );
       }
-    });
+
+      // Refresh stock to get latest data
+      await stock.reload();
+
+      console.log('✅ Stock adjustment successful:', {
+        productId,
+        warehouseId,
+        previousQuantity,
+        newQuantity
+      });
+
+      res.json({
+        message: 'Stock adjusted successfully',
+        stock: {
+          ...stock.toJSON(),
+          availableQuantity: stock.availableQuantity
+        }
+      });
+    } catch (postCommitError) {
+      // Log post-commit errors but don't fail the request since transaction already succeeded
+      console.error('⚠️ Post-commit error (transaction already committed):', postCommitError);
+      
+      // Still return success since the database transaction was successful
+      res.json({
+        message: 'Stock adjusted successfully',
+        stock: {
+          ...stock.toJSON(),
+          availableQuantity: stock.availableQuantity
+        },
+        warning: 'Stock adjusted but some notifications may not have been sent'
+      });
+    }
   } catch (error) {
-    console.error('Adjust stock error:', error);
+    // Only rollback if transaction hasn't been committed
+    if (!transaction.finished) {
+      try {
+        await transaction.rollback();
+      } catch (rollbackError) {
+        console.error('Error during rollback:', rollbackError);
+      }
+    }
+    
+    console.error('❌ Adjust stock error:', error);
     console.error('Error details:', {
       message: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
+      code: error.code,
+      sql: error.sql,
+      sqlMessage: error.sqlMessage,
+      transactionFinished: transaction.finished
     });
     res.status(500).json({ 
       error: 'Internal server error',
-      details: error.message 
+      details: process.env.NODE_ENV === 'development' ? error.message : 'An error occurred while adjusting stock'
     });
   }
 });

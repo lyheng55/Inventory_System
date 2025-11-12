@@ -15,8 +15,12 @@ const {
   inventoryRoutes, 
   managementRoutes, 
   reportRoutes,
-  uploads: uploadRoutes 
+  uploads: uploadRoutes,
+  auditRoutes
 } = require('./routes');
+
+// Import audit middleware
+const { auditMiddleware } = require('./middleware/audit');
 
 const app = express();
 const server = http.createServer(app);
@@ -24,7 +28,7 @@ const io = socketIo(server, {
   cors: {
     origin: [
       process.env.CLIENT_URL || "http://localhost:3000",
-      "http://192.168.20.69:3000",
+      "http://192.168.20.82:3000",
       "http://localhost:3000",
       "http://127.0.0.1:3000",
       "http://192.168.110.235:3000"
@@ -69,10 +73,16 @@ app.use(cors({
     
     callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Audit middleware - logs all API requests
+app.use(auditMiddleware);
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -121,17 +131,20 @@ app.use((req, res, next) => {
 // Auth routes
 app.use('/api/auth', authRoutes.authRoutes);
 app.use('/api/users', authRoutes.userRoutes);
+app.use('/api/auth/permissions', authRoutes.permissionRoutes);
 
 // Inventory routes
 app.use('/api/products', inventoryRoutes.productRoutes);
 app.use('/api/stock', inventoryRoutes.stockRoutes);
 app.use('/api/categories', inventoryRoutes.categoryRoutes);
 app.use('/api/barcodes', inventoryRoutes.barcodeRoutes);
+app.use('/api/units', inventoryRoutes.unitRoutes);
 
 // Management routes
 app.use('/api/suppliers', managementRoutes.supplierRoutes);
 app.use('/api/warehouses', managementRoutes.warehouseRoutes);
 app.use('/api/purchase-orders', managementRoutes.purchaseOrderRoutes);
+app.use('/api/sales', managementRoutes.saleRoutes);
 
 // Reports routes
 app.use('/api/reports', reportRoutes.reportRoutes);
@@ -140,6 +153,10 @@ app.use('/api/analytics', reportRoutes.analyticsRoutes);
 
 // Utility routes
 app.use('/api/uploads', uploadRoutes);
+
+// Audit routes
+app.use('/api/audit-logs', auditRoutes.auditLogsRoutes);
+app.use('/api/backup', auditRoutes.backupRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

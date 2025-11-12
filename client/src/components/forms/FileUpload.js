@@ -62,7 +62,7 @@ const FileUpload = ({
     };
   }, [previewUrl]);
 
-  const handleFileSelect = (event) => {
+  const handleFileSelect = async (event) => {
     const selectedFiles = Array.from(event.target.files);
     
     // Clear the input value to allow selecting the same file again
@@ -82,10 +82,16 @@ const FileUpload = ({
     }
 
     setFiles(selectedFiles);
+    
+    // Auto-upload for product images (single file, non-multiple)
+    if (uploadType === 'productImage' && !multiple && selectedFiles.length === 1) {
+      // Trigger upload automatically
+      await handleUploadForFiles(selectedFiles);
+    }
   };
-
-  const handleUpload = async () => {
-    if (files.length === 0) {
+  
+  const handleUploadForFiles = async (filesToUpload) => {
+    if (filesToUpload.length === 0) {
       onError?.('Please select files to upload');
       return;
     }
@@ -98,11 +104,11 @@ const FileUpload = ({
       
       // Add files to form data
       if (multiple) {
-        files.forEach(file => {
+        filesToUpload.forEach(file => {
           formData.append(uploadType === 'productImage' ? 'productImages' : 'documents', file);
         });
       } else {
-        formData.append(uploadType, files[0]);
+        formData.append(uploadType, filesToUpload[0]);
       }
 
       // Add additional data
@@ -117,8 +123,8 @@ const FileUpload = ({
       }
 
       const endpoint = multiple 
-        ? (uploadType === 'productImage' ? '/api/uploads/product-images' : '/api/uploads/documents')
-        : (uploadType === 'productImage' ? '/api/uploads/product-image' : '/api/uploads/document');
+        ? (uploadType === 'productImage' ? '/uploads/product-images' : '/uploads/documents')
+        : (uploadType === 'productImage' ? '/uploads/product-image' : '/uploads/document');
 
       const response = await axios.post(endpoint, formData, {
         headers: {
@@ -146,6 +152,10 @@ const FileUpload = ({
       console.error('Upload error:', error);
       onError?.(error.response?.data?.error || 'Upload failed');
     }
+  };
+
+  const handleUpload = async () => {
+    await handleUploadForFiles(files);
   };
 
   const handleRemoveFile = (index) => {
@@ -214,6 +224,8 @@ const FileUpload = ({
     <Box>
       {/* Upload Area */}
       <Box
+        component="label"
+        htmlFor={`file-upload-${uploadType}`}
         sx={{
           border: '2px dashed',
           borderColor: 'primary.main',
@@ -223,36 +235,45 @@ const FileUpload = ({
           backgroundColor: 'grey.50',
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
+          display: 'block',
+          position: 'relative',
+          userSelect: 'none',
           '&:hover': {
             backgroundColor: disabled ? 'grey.50' : 'primary.50',
-          }
-        }}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!disabled && fileInputRef.current) {
-            fileInputRef.current.click();
+          },
+          '&:active': {
+            backgroundColor: disabled ? 'grey.50' : 'primary.100',
           }
         }}
       >
         <input
+          id={`file-upload-${uploadType}`}
           ref={fileInputRef}
           type="file"
           accept={accept}
           multiple={multiple}
           onChange={handleFileSelect}
-          style={{ display: 'none' }}
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0,
+            cursor: 'pointer',
+            zIndex: 10,
+            fontSize: 0
+          }}
           disabled={disabled}
         />
-        
-        <CloudUpload sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-        <Typography variant="h6" gutterBottom>
+        <CloudUpload sx={{ fontSize: 48, color: 'primary.main', mb: 2, pointerEvents: 'none', position: 'relative', zIndex: 0 }} />
+        <Typography variant="h6" gutterBottom sx={{ pointerEvents: 'none', position: 'relative', zIndex: 0 }}>
           {multiple ? 'Upload Files' : 'Upload File'}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" sx={{ pointerEvents: 'none', position: 'relative', zIndex: 0 }}>
           Click to select files or drag and drop
         </Typography>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1, pointerEvents: 'none', position: 'relative', zIndex: 0 }}>
           Max size: {(maxSize / 1024 / 1024).toFixed(1)}MB
           {multiple && ` • Max files: ${maxFiles}`}
         </Typography>

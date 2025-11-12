@@ -2,5 +2,6 @@
 module.exports = {
   supplierRoutes: require('./suppliers'),
   warehouseRoutes: require('./warehouses'),
-  purchaseOrderRoutes: require('./purchaseOrders')
+  purchaseOrderRoutes: require('./purchaseOrders'),
+  saleRoutes: require('./sales')
 };

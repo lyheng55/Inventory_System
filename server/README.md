@@ -10,7 +10,6 @@ The server has been reorganized into a clean, professional structure for better 
 server/
 ├── 📁 config/                 # Configuration files
 │   ├── database.js           # Database configuration
-│   ├── database-fallback.js  # Fallback database config
 │   └── env.example          # Environment variables example
 ├── 📁 database/              # Database files
 │   └── init.sql             # Database initialization

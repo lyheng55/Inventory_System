@@ -49,9 +49,11 @@ import {
   useMutation,
   useQueryClient
 } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import axios from '../../utils/axios';
 
 const Warehouses = () => {
+  const { t } = useTranslation();
   const [openDialog, setOpenDialog] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState(null);
   const [viewingWarehouse, setViewingWarehouse] = useState(null);
@@ -77,16 +79,42 @@ const Warehouses = () => {
     }
   );
 
-  const { data: users } = useQuery(
-    'users',
+  const { data: usersData } = useQuery(
+    'users-for-dropdown',
     async () => {
-      // This would need a users endpoint - for now we'll use a mock
-      return [
-        { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@example.com', role: 'warehouse_manager' },
-        { id: 2, firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com', role: 'warehouse_manager' }
-      ];
+      try {
+        // Fetch all active users from database for dropdown
+        const response = await axios.get('/users', {
+          params: {
+            page: 1,
+            limit: 1000, // Get a large number of users for dropdown
+            isActive: 'true' // Only get active users
+          }
+        });
+        
+        // The API returns { users: [...], pagination: {...} }
+        if (response.data?.users && Array.isArray(response.data.users)) {
+          return response.data.users;
+        } else if (Array.isArray(response.data)) {
+          return response.data;
+        } else {
+          // Fallback to empty array if format is unexpected
+          return [];
+        }
+      } catch (error) {
+        console.warn('Failed to fetch users from database:', error);
+        // Return empty array on error
+        return [];
+      }
+    },
+    {
+      // Set default value to empty array
+      initialData: []
     }
   );
+
+  // Ensure users is always an array
+  const users = Array.isArray(usersData) ? usersData : [];
 
   const { data: stockData } = useQuery(
     'warehouseStock',
@@ -497,13 +525,20 @@ const Warehouses = () => {
                     value={formData.managerId}
                     onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
                     label="Manager"
+                    disabled={users.length === 0}
                   >
                     <MenuItem value="">No manager assigned</MenuItem>
-                    {users?.map((user) => (
-                      <MenuItem key={user.id} value={user.id}>
-                        {user.firstName} {user.lastName} ({user.email})
+                    {users.length === 0 ? (
+                      <MenuItem disabled value="">
+                        <em>Loading users...</em>
                       </MenuItem>
-                    ))}
+                    ) : (
+                      users.map((user) => (
+                        <MenuItem key={user.id} value={user.id}>
+                          {user.firstName} {user.lastName} ({user.email})
+                        </MenuItem>
+                      ))
+                    )}
                   </Select>
                 </FormControl>
               </Grid>

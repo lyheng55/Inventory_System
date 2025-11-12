@@ -26,8 +26,10 @@ import {
   Save
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const Profile = () => {
+  const { t } = useTranslation();
   const { user, updateProfile, changePassword } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [profileData, setProfileData] = useState({
@@ -61,7 +63,7 @@ const Profile = () => {
     const result = await updateProfile(profileData);
     
     if (result.success) {
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setMessage({ type: 'success', text: t('profile.profileUpdatedSuccess') });
     } else {
       setMessage({ type: 'error', text: result.error });
     }
@@ -75,7 +77,7 @@ const Profile = () => {
     setMessage({ type: '', text: '' });
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setMessage({ type: 'error', text: 'New passwords do not match' });
+      setMessage({ type: 'error', text: t('profile.newPasswordsDoNotMatch') });
       setLoading(false);
       return;
     }
@@ -83,7 +85,7 @@ const Profile = () => {
     const result = await changePassword(passwordData.currentPassword, passwordData.newPassword);
     
     if (result.success) {
-      setMessage({ type: 'success', text: 'Password changed successfully!' });
+      setMessage({ type: 'success', text: t('profile.passwordChangedSuccess') });
       setPasswordData({
         currentPassword: '',
         newPassword: '',
@@ -106,14 +108,14 @@ const Profile = () => {
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>
-        Profile Settings
+        {t('profile.title')}
       </Typography>
 
       <Card>
         <CardContent>
           <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 3 }}>
-            <Tab label="Profile Information" />
-            <Tab label="Change Password" />
+            <Tab label={t('profile.profileInformation')} />
+            <Tab label={t('profile.changePassword')} />
           </Tabs>
 
           {message.text && (
@@ -128,7 +130,7 @@ const Profile = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="First Name"
+                    label={t('auth.firstName')}
                     value={profileData.firstName}
                     onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
                     InputProps={{
@@ -144,7 +146,7 @@ const Profile = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Last Name"
+                    label={t('auth.lastName')}
                     value={profileData.lastName}
                     onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
                     required
@@ -153,7 +155,7 @@ const Profile = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Email"
+                    label={t('auth.email')}
                     type="email"
                     value={profileData.email}
                     onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
@@ -170,25 +172,25 @@ const Profile = () => {
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="h6" gutterBottom>
-                    Account Information
+                    {t('profile.accountInformation')}
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="Username"
+                        label={t('auth.username')}
                         value={user?.username || ''}
                         disabled
-                        helperText="Username cannot be changed"
+                        helperText={t('profile.usernameCannotBeChanged')}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="Role"
+                        label={t('users.role')}
                         value={user?.role || ''}
                         disabled
-                        helperText="Role is assigned by administrator"
+                        helperText={t('profile.roleAssignedByAdmin')}
                       />
                     </Grid>
                   </Grid>
@@ -201,7 +203,7 @@ const Profile = () => {
                     disabled={loading}
                     sx={{ mt: 2 }}
                   >
-                    {loading ? 'Updating...' : 'Update Profile'}
+                    {loading ? t('common.loading') : t('profile.updateProfile')}
                   </Button>
                 </Grid>
               </Grid>
@@ -211,7 +213,7 @@ const Profile = () => {
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel>Current Password</InputLabel>
+                    <InputLabel>{t('profile.currentPassword')}</InputLabel>
                     <OutlinedInput
                       type={showPasswords.current ? 'text' : 'password'}
                       value={passwordData.currentPassword}
@@ -231,14 +233,14 @@ const Profile = () => {
                           </IconButton>
                         </InputAdornment>
                       }
-                      label="Current Password"
+                      label={t('profile.currentPassword')}
                       required
                     />
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel>New Password</InputLabel>
+                    <InputLabel>{t('profile.newPassword')}</InputLabel>
                     <OutlinedInput
                       type={showPasswords.new ? 'text' : 'password'}
                       value={passwordData.newPassword}
@@ -258,14 +260,14 @@ const Profile = () => {
                           </IconButton>
                         </InputAdornment>
                       }
-                      label="New Password"
+                      label={t('profile.newPassword')}
                       required
                     />
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel>Confirm New Password</InputLabel>
+                    <InputLabel>{t('profile.confirmNewPassword')}</InputLabel>
                     <OutlinedInput
                       type={showPasswords.confirm ? 'text' : 'password'}
                       value={passwordData.confirmPassword}
@@ -285,7 +287,7 @@ const Profile = () => {
                           </IconButton>
                         </InputAdornment>
                       }
-                      label="Confirm New Password"
+                      label={t('profile.confirmNewPassword')}
                       required
                     />
                   </FormControl>
@@ -298,7 +300,7 @@ const Profile = () => {
                     disabled={loading}
                     sx={{ mt: 2 }}
                   >
-                    {loading ? 'Changing...' : 'Change Password'}
+                    {loading ? t('common.loading') : t('profile.changePassword')}
                   </Button>
                 </Grid>
               </Grid>

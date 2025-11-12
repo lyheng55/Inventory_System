@@ -15,7 +15,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./server/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./server/scripts/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - inventory_network
 
@@ -33,7 +33,7 @@ services:
       DB_NAME: inventory_db
       DB_USER: inventory_user
       DB_PASSWORD: inventory_password
-      JWT_SECRET: your-super-secret-jwt-key-here
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
       PORT: 5000
     ports:
       - "5000:5000"

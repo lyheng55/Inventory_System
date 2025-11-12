@@ -7,6 +7,12 @@ class RealtimeService {
 
   // Emit stock level updates to all connected clients
   emitStockUpdate(productId, warehouseId, newQuantity, previousQuantity, movementType) {
+    // Check if io is available and has emit method
+    if (!this.io || typeof this.io.emit !== 'function') {
+      console.warn('Socket.IO not initialized, skipping stock update emission');
+      return;
+    }
+
     const update = {
       productId,
       warehouseId,
@@ -16,13 +22,20 @@ class RealtimeService {
       timestamp: new Date().toISOString()
     };
 
-    // Emit to all clients
-    this.io.emit('stock-update', update);
-    
-    // Emit to specific warehouse room
-    this.io.to(`warehouse-${warehouseId}`).emit('warehouse-stock-update', update);
-    
-    console.log('Stock update emitted:', update);
+    try {
+      // Emit to all clients
+      this.io.emit('stock-update', update);
+      
+      // Emit to specific warehouse room
+      if (typeof this.io.to === 'function') {
+        this.io.to(`warehouse-${warehouseId}`).emit('warehouse-stock-update', update);
+      }
+      
+      console.log('Stock update emitted:', update);
+    } catch (error) {
+      console.error('Error emitting stock update:', error);
+      // Don't throw - realtime updates shouldn't break the main flow
+    }
   }
 
   // Emit low stock alerts

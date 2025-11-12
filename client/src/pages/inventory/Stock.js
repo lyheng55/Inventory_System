@@ -40,9 +40,11 @@ import {
   useMutation,
   useQueryClient
 } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import axios from '../../utils/axios';
 
 const Stock = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState('');
@@ -60,7 +62,7 @@ const Stock = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: stockData, isLoading } = useQuery(
+  const { data: stockDataRaw, isLoading } = useQuery(
     ['stock', page, search, warehouseFilter, lowStockFilter],
     async () => {
       const params = new URLSearchParams({
@@ -76,7 +78,12 @@ const Stock = () => {
     }
   );
 
-  const { data: products = [] } = useQuery(
+  // Ensure stockData.stocks is always an array
+  const stockData = stockDataRaw && stockDataRaw.stocks
+    ? { ...stockDataRaw, stocks: Array.isArray(stockDataRaw.stocks) ? stockDataRaw.stocks : [] }
+    : { stocks: [] };
+
+  const { data: productsData } = useQuery(
     'products',
     async () => {
       const response = await axios.get('/products?limit=1000');
@@ -84,7 +91,10 @@ const Stock = () => {
     }
   );
 
-  const { data: warehouses = [] } = useQuery(
+  // Ensure products is always an array
+  const products = Array.isArray(productsData) ? productsData : [];
+
+  const { data: warehousesData } = useQuery(
     'warehouses',
     async () => {
       const response = await axios.get('/warehouses');
@@ -92,13 +102,19 @@ const Stock = () => {
     }
   );
 
-  const { data: lowStockAlerts = [] } = useQuery(
+  // Ensure warehouses is always an array
+  const warehouses = Array.isArray(warehousesData) ? warehousesData : [];
+
+  const { data: lowStockAlertsData } = useQuery(
     'lowStockAlerts',
     async () => {
       const response = await axios.get('/stock/alerts/low-stock');
       return response.data?.alerts || [];
     }
   );
+
+  // Ensure lowStockAlerts is always an array
+  const lowStockAlerts = Array.isArray(lowStockAlertsData) ? lowStockAlertsData : [];
 
   const adjustStockMutation = useMutation(
     (stockData) => axios.post('/stock/adjust', stockData),
@@ -112,7 +128,27 @@ const Stock = () => {
       },
       onError: (error) => {
         console.error('Adjust stock error:', error);
-        alert('Failed to adjust stock: ' + (error.response?.data?.error || error.message));
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          response: error.response,
+          config: error.config
+        });
+        
+        let errorMessage = 'Failed to adjust stock: ';
+        if (error.code === 'ECONNABORTED') {
+          errorMessage += 'Request timeout. Please try again.';
+        } else if (error.code === 'ERR_NETWORK' || !error.response) {
+          errorMessage += 'Network error. Please check if the server is running.';
+        } else if (error.response?.data?.error) {
+          errorMessage += error.response.data.error;
+        } else if (error.response?.data?.details) {
+          errorMessage += error.response.data.details;
+        } else {
+          errorMessage += error.message || 'Unknown error occurred';
+        }
+        
+        alert(errorMessage);
       }
     }
   );
@@ -206,7 +242,7 @@ const Stock = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <Typography>Loading stock data...</Typography>
+        <Typography>{t('stock.loadingStockData')}</Typography>
       </Box>
     );
   }
@@ -215,7 +251,7 @@ const Stock = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Stock Management
+          {t('stock.title')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -223,14 +259,14 @@ const Stock = () => {
             startIcon={<TrendingUp />}
             onClick={() => handleOpenDialog('adjustment')}
           >
-            Adjust Stock
+            {t('stock.adjustStock')}
           </Button>
           <Button
             variant="outlined"
             startIcon={<SwapHoriz />}
             onClick={() => handleOpenDialog('transfer')}
           >
-            Transfer Stock
+            {t('stock.transfer')}
           </Button>
         </Box>
       </Box>
@@ -239,16 +275,16 @@ const Stock = () => {
       {lowStockAlerts && lowStockAlerts.length > 0 && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Low Stock Alerts ({lowStockAlerts.length})
+            {t('dashboard.lowStockAlerts')} ({lowStockAlerts.length})
           </Typography>
           {lowStockAlerts.slice(0, 3).map((alert, index) => (
             <Typography key={index} variant="body2">
-              • {alert.productName} - {alert.currentStock} remaining (Reorder: {alert.reorderPoint})
+              • {alert.productName} - {alert.currentStock} {t('dashboard.remaining')} ({t('dashboard.reorder')}: {alert.reorderPoint})
             </Typography>
           ))}
           {lowStockAlerts.length > 3 && (
             <Typography variant="body2">
-              ... and {lowStockAlerts.length - 3} more
+              ... {t('common.and')} {lowStockAlerts.length - 3} {t('common.more')}
             </Typography>
           )}
         </Alert>
@@ -261,7 +297,7 @@ const Stock = () => {
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                label="Search products"
+                label={t('stock.searchProducts')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 InputProps={{
@@ -275,13 +311,13 @@ const Stock = () => {
             </Grid>
             <Grid item xs={12} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Warehouse</InputLabel>
+                <InputLabel>{t('warehouses.title')}</InputLabel>
                 <Select
                   value={warehouseFilter}
                   onChange={(e) => setWarehouseFilter(e.target.value)}
-                  label="Warehouse"
+                  label={t('warehouses.title')}
                 >
-                  <MenuItem value="">All Warehouses</MenuItem>
+                  <MenuItem value="">{t('common.all')} {t('warehouses.title')}</MenuItem>
                   {warehouses?.map((warehouse) => (
                     <MenuItem key={warehouse.id} value={warehouse.id}>
                       {warehouse.name}
@@ -297,7 +333,7 @@ const Stock = () => {
                 onClick={() => setLowStockFilter(!lowStockFilter)}
                 fullWidth
               >
-                Low Stock Only
+                {t('products.lowStockFilter')}
               </Button>
             </Grid>
           </Grid>
@@ -310,14 +346,14 @@ const Stock = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Product</TableCell>
-                <TableCell>SKU</TableCell>
-                <TableCell>Warehouse</TableCell>
-                <TableCell>Location</TableCell>
-                <TableCell>Quantity</TableCell>
-                <TableCell>Available</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>{t('products.title')}</TableCell>
+                <TableCell>{t('products.sku')}</TableCell>
+                <TableCell>{t('warehouses.title')}</TableCell>
+                <TableCell>{t('stock.location')}</TableCell>
+                <TableCell>{t('common.quantity')}</TableCell>
+                <TableCell>{t('stock.available')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -338,7 +374,7 @@ const Stock = () => {
                   <TableCell>{stock.availableQuantity}</TableCell>
                   <TableCell>
                     <Chip
-                      label={stock.quantity <= stock.Product?.reorderPoint ? 'Low Stock' : 'In Stock'}
+                      label={stock.quantity <= stock.Product?.reorderPoint ? t('stock.lowStock') : t('stock.inStock')}
                       color={stock.quantity <= stock.Product?.reorderPoint ? 'warning' : 'success'}
                       size="small"
                     />
@@ -373,18 +409,18 @@ const Stock = () => {
       {/* Stock Movement Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {movementType === 'transfer' ? 'Transfer Stock' : 'Adjust Stock'}
+          {movementType === 'transfer' ? t('stock.transfer') : t('stock.adjustStock')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <FormControl fullWidth required>
-                  <InputLabel>Product</InputLabel>
+                  <InputLabel>{t('products.title')}</InputLabel>
                   <Select
                     value={formData.productId}
                     onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
-                    label="Product"
+                    label={t('products.title')}
                   >
                     {products?.map((product) => (
                       <MenuItem key={product.id} value={product.id}>
@@ -396,11 +432,11 @@ const Stock = () => {
               </Grid>
               <Grid item xs={12}>
                 <FormControl fullWidth required>
-                  <InputLabel>Warehouse</InputLabel>
+                  <InputLabel>{t('warehouses.title')}</InputLabel>
                   <Select
                     value={formData.warehouseId}
                     onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                    label="Warehouse"
+                    label={t('warehouses.title')}
                   >
                     {warehouses?.map((warehouse) => (
                       <MenuItem key={warehouse.id} value={warehouse.id}>
@@ -413,11 +449,11 @@ const Stock = () => {
               {movementType === 'transfer' && (
                 <Grid item xs={12}>
                   <FormControl fullWidth required>
-                    <InputLabel>To Warehouse</InputLabel>
+                    <InputLabel>{t('stock.toWarehouse')}</InputLabel>
                     <Select
                       value={formData.toWarehouseId || ''}
                       onChange={(e) => setFormData({ ...formData, toWarehouseId: e.target.value })}
-                      label="To Warehouse"
+                      label={t('stock.toWarehouse')}
                     >
                       {warehouses?.map((warehouse) => (
                         <MenuItem key={warehouse.id} value={warehouse.id}>
@@ -431,29 +467,29 @@ const Stock = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Quantity"
+                  label={t('common.quantity')}
                   name="quantity"
                   type="number"
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                   required
-                  helperText={movementType === 'adjustment' ? 'Positive for increase, negative for decrease' : 'Quantity to transfer'}
+                  helperText={movementType === 'adjustment' ? t('stock.adjustmentHelper') : t('stock.transferHelper')}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Location"
+                  label={t('stock.location')}
                   name="location"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  helperText="Specific location within warehouse (optional)"
+                  helperText={t('stock.locationHelper')}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Reason"
+                  label={t('stock.reason')}
                   name="reason"
                   value={formData.reason}
                   onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
@@ -463,7 +499,7 @@ const Stock = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Notes"
+                  label={t('common.notes')}
                   name="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -474,9 +510,9 @@ const Stock = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained">
-              {movementType === 'transfer' ? 'Transfer' : 'Adjust'}
+              {movementType === 'transfer' ? t('stock.transfer') : t('stock.adjustment')}
             </Button>
           </DialogActions>
         </form>

@@ -34,9 +34,11 @@ import {
   useMutation,
   useQueryClient
 } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import axios from '../../utils/axios';
 
 const Categories = () => {
+  const { t } = useTranslation();
   const [openDialog, setOpenDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({
@@ -130,7 +132,7 @@ const Categories = () => {
   };
 
   const handleDelete = (category) => {
-    if (window.confirm(`Are you sure you want to delete ${category.name}?`)) {
+    if (window.confirm(t('categories.confirmDelete', { name: category.name }))) {
       deleteCategoryMutation.mutate(category.id);
     }
   };
@@ -138,7 +140,7 @@ const Categories = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <Typography>Loading categories...</Typography>
+        <Typography>{t('common.loading')}</Typography>
       </Box>
     );
   }
@@ -147,14 +149,14 @@ const Categories = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Categories
+          {t('categories.title')}
         </Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => handleOpenDialog()}
         >
-          Add Category
+          {t('categories.addCategory')}
         </Button>
       </Box>
 
@@ -163,11 +165,11 @@ const Categories = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Parent Category</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>{t('common.name')}</TableCell>
+                <TableCell>{t('common.description')}</TableCell>
+                <TableCell>{t('categories.parentCategory')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -179,13 +181,13 @@ const Categories = () => {
                       {category.name}
                     </Box>
                   </TableCell>
-                  <TableCell>{category.description || 'N/A'}</TableCell>
+                  <TableCell>{category.description || t('common.noData')}</TableCell>
                   <TableCell>
-                    {category.parent ? category.parent.name : 'Root Category'}
+                    {category.parent ? category.parent.name : t('categories.rootCategory')}
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={category.isActive ? 'Active' : 'Inactive'}
+                      label={category.isActive ? t('common.active') : t('common.inactive')}
                       color={category.isActive ? 'success' : 'default'}
                       size="small"
                     />
@@ -208,7 +210,7 @@ const Categories = () => {
       {/* Add/Edit Category Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {editingCategory ? 'Edit Category' : 'Add New Category'}
+          {editingCategory ? t('categories.editCategory') : t('categories.addCategory')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
@@ -216,7 +218,7 @@ const Categories = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Category Name"
+                  label={t('categories.categoryName')}
                   name="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -226,7 +228,7 @@ const Categories = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Description"
+                  label={t('common.description')}
                   name="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -236,13 +238,13 @@ const Categories = () => {
               </Grid>
               <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Parent Category</InputLabel>
+                  <InputLabel>{t('categories.parentCategory')}</InputLabel>
                   <Select
                     value={formData.parentId}
                     onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
-                    label="Parent Category"
+                    label={t('categories.parentCategory')}
                   >
-                    <MenuItem value="">Root Category</MenuItem>
+                    <MenuItem value="">{t('categories.rootCategory')}</MenuItem>
                     {categories?.filter(cat => cat.id !== editingCategory?.id).map((category) => (
                       <MenuItem key={category.id} value={category.id}>
                         {category.name}
@@ -254,9 +256,9 @@ const Categories = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained">
-              {editingCategory ? 'Update' : 'Create'}
+              {editingCategory ? t('common.update') : t('common.create')}
             </Button>
           </DialogActions>
         </form>

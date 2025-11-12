@@ -23,11 +23,13 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from 'react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from '../utils/axios';
 import RealtimeDashboard from '../components/realtime/RealtimeDashboard';
 import RealtimeStockUpdates from '../components/realtime/RealtimeStockUpdates';
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: dashboardData, isLoading, refetch } = useQuery(
     'dashboard',
@@ -51,25 +53,25 @@ const Dashboard = () => {
 
   const stats = [
     {
-      title: 'Total Products',
+      title: t('dashboard.totalProducts'),
       value: dashboardData?.totalProducts || 0,
       icon: <Inventory />,
       color: 'primary'
     },
     {
-      title: 'Low Stock Alerts',
+      title: t('dashboard.lowStockAlerts'),
       value: dashboardData?.lowStockAlerts?.length || 0,
       icon: <Warning />,
       color: 'error'
     },
     {
-      title: 'Recent Movements',
+      title: t('dashboard.recentMovements'),
       value: dashboardData?.recentMovements?.length || 0,
       icon: <TrendingUp />,
       color: 'success'
     },
     {
-      title: 'Active Orders',
+      title: t('dashboard.activeOrders'),
       value: 0, // This would come from purchase orders API
       icon: <ShoppingCart />,
       color: 'info'
@@ -79,7 +81,7 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <Typography>Loading dashboard...</Typography>
+        <Typography>{t('dashboard.loadingDashboard')}</Typography>
       </Box>
     );
   }
@@ -88,7 +90,7 @@ const Dashboard = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Dashboard
+          {t('dashboard.title')}
         </Typography>
         <IconButton onClick={() => refetch()}>
           <Refresh />
@@ -130,7 +132,7 @@ const Dashboard = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Low Stock Alerts
+                {t('dashboard.lowStockAlerts')}
               </Typography>
               {dashboardData?.lowStockAlerts?.length > 0 ? (
                 <List>
@@ -141,10 +143,10 @@ const Dashboard = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={alert.productName}
-                        secondary={`${alert.currentStock} remaining (Reorder: ${alert.reorderPoint})`}
+                        secondary={`${alert.currentStock} ${t('dashboard.remaining')} (${t('dashboard.reorder')}: ${alert.reorderPoint})`}
                       />
                       <Chip
-                        label={alert.critical ? 'Critical' : 'Low'}
+                        label={alert.critical ? t('dashboard.critical') : t('dashboard.low')}
                         color={alert.critical ? 'error' : 'warning'}
                         size="small"
                       />
@@ -153,7 +155,7 @@ const Dashboard = () => {
                 </List>
               ) : (
                 <Typography color="textSecondary">
-                  No low stock alerts
+                  {t('dashboard.noLowStockAlerts')}
                 </Typography>
               )}
             </CardContent>
@@ -165,7 +167,7 @@ const Dashboard = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Recent Stock Movements
+                {t('dashboard.recentMovements')}
               </Typography>
               {dashboardData?.recentMovements?.length > 0 ? (
                 <List>
@@ -175,8 +177,8 @@ const Dashboard = () => {
                         <TrendingUp color="primary" />
                       </ListItemIcon>
                       <ListItemText
-                        primary={movement.Product?.name || 'Unknown Product'}
-                        secondary={`${movement.movementType} - ${movement.quantity} units`}
+                        primary={movement.Product?.name || t('common.noData')}
+                        secondary={`${movement.movementType} - ${movement.quantity} ${t('dashboard.units')}`}
                       />
                       <Chip
                         label={movement.movementType}
@@ -188,7 +190,7 @@ const Dashboard = () => {
                 </List>
               ) : (
                 <Typography color="textSecondary">
-                  No recent movements
+                  {t('dashboard.noRecentMovements')}
                 </Typography>
               )}
             </CardContent>
@@ -200,7 +202,7 @@ const Dashboard = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Quick Actions
+                {t('dashboard.quickActions')}
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6} md={3}>
@@ -209,7 +211,7 @@ const Dashboard = () => {
                     onClick={() => navigate('/products')}
                   >
                     <Inventory sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                    <Typography variant="subtitle1">Add Product</Typography>
+                    <Typography variant="subtitle1">{t('dashboard.addProduct')}</Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
@@ -218,7 +220,7 @@ const Dashboard = () => {
                     onClick={() => navigate('/purchase-orders')}
                   >
                     <ShoppingCart sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
-                    <Typography variant="subtitle1">Create Order</Typography>
+                    <Typography variant="subtitle1">{t('dashboard.createOrder')}</Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
@@ -227,7 +229,7 @@ const Dashboard = () => {
                     onClick={() => navigate('/reports')}
                   >
                     <TrendingUp sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
-                    <Typography variant="subtitle1">Stock Report</Typography>
+                    <Typography variant="subtitle1">{t('dashboard.stockReport')}</Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
@@ -236,7 +238,7 @@ const Dashboard = () => {
                     onClick={() => navigate('/stock')}
                   >
                     <Notifications sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
-                    <Typography variant="subtitle1">View Alerts</Typography>
+                    <Typography variant="subtitle1">{t('dashboard.viewAlerts')}</Typography>
                   </Paper>
                 </Grid>
               </Grid>

@@ -72,43 +72,50 @@ router.post('/product-image', authenticateToken, requireStaff, upload.single('pr
     }
 
     const productId = req.body.productId;
+    const uploadPath = path.resolve(process.env.UPLOAD_PATH || './uploads');
+    const filePath = path.resolve(req.file.path);
+    // Calculate relative path from upload base to file
+    const imagePath = path.relative(uploadPath, filePath).replace(/\\/g, '/');
     
-    if (!productId) {
-      // Delete the uploaded file if no product ID provided
-      fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: 'Product ID is required' });
-    }
-
-    // Check if product exists
-    const product = await Product.findByPk(productId);
-    if (!product) {
-      // Delete the uploaded file if product doesn't exist
-      fs.unlinkSync(req.file.path);
-      return res.status(404).json({ error: 'Product not found' });
-    }
-
-    // Delete old image if exists
-    if (product.image) {
-      const oldImagePath = path.join(process.env.UPLOAD_PATH || './uploads', product.image);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
+    // If productId is provided, update the product
+    if (productId) {
+      // Check if product exists
+      const product = await Product.findByPk(productId);
+      if (!product) {
+        // Delete the uploaded file if product doesn't exist
+        fs.unlinkSync(req.file.path);
+        return res.status(404).json({ error: 'Product not found' });
       }
-    }
 
-    // Update product with new image path
-    const imagePath = path.relative(process.env.UPLOAD_PATH || './uploads', req.file.path);
-    await product.update({ image: imagePath });
-
-    res.json({
-      message: 'Product image uploaded successfully',
-      imagePath: imagePath,
-      imageUrl: `/uploads/${imagePath}`,
-      product: {
-        id: product.id,
-        name: product.name,
-        image: imagePath
+      // Delete old image if exists
+      if (product.image) {
+        const oldImagePath = path.join(process.env.UPLOAD_PATH || './uploads', product.image);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
       }
-    });
+
+      // Update product with new image path
+      await product.update({ image: imagePath });
+
+      return res.json({
+        message: 'Product image uploaded successfully',
+        imagePath: imagePath,
+        imageUrl: `/uploads/${imagePath}`,
+        product: {
+          id: product.id,
+          name: product.name,
+          image: imagePath
+        }
+      });
+    } else {
+      // No productId provided - return image path for new product creation
+      return res.json({
+        message: 'Image uploaded successfully',
+        imagePath: imagePath,
+        imageUrl: `/uploads/${imagePath}`
+      });
+    }
   } catch (error) {
     // Delete uploaded file on error
     if (req.file && fs.existsSync(req.file.path)) {

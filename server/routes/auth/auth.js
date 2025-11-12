@@ -4,6 +4,7 @@ const { User } = require('../../models');
 const { Op } = require('sequelize');
 const { authenticateToken } = require('../../middleware/auth');
 const { validateRequest, userRegistrationSchema, userLoginSchema, passwordChangeSchema } = require('../../middleware/validation');
+const AuditService = require('../../services/auditService');
 
 const router = express.Router();
 
@@ -63,16 +64,24 @@ router.post('/login', validateRequest(userLoginSchema), async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // For testing purposes, allow test user without database
-    if (username === 'testuser' && password === 'Test123!') {
+    // For testing purposes, allow test user without database (DEVELOPMENT ONLY)
+    // SECURITY: This should NEVER be enabled in production
+    if (process.env.NODE_ENV === 'development' && username === 'testuser' && password === 'Test123!') {
+      // Require JWT_SECRET to be set even in development
+      if (!process.env.JWT_SECRET) {
+        return res.status(500).json({ 
+          error: 'JWT_SECRET must be set in environment variables' 
+        });
+      }
+
       const token = jwt.sign(
         { userId: 1, role: 'sales_staff' },
-        process.env.JWT_SECRET || 'fallback-secret-key-for-testing',
+        process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
       );
 
       return res.json({
-        message: 'Login successful',
+        message: 'Login successful (test user - development only)',
         token,
         user: {
           id: 1,
@@ -231,6 +240,38 @@ router.put('/change-password', authenticateToken, validateRequest(passwordChange
   } catch (error) {
     console.error('Password change error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Logout user
+router.post('/logout', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0]?.trim();
+    const userAgent = req.headers['user-agent'];
+
+    // Log logout action to audit trail
+    await AuditService.logAuth(
+      userId,
+      'LOGOUT',
+      ipAddress,
+      userAgent,
+      'success'
+    );
+
+    // Return success response
+    res.status(200).json({
+      message: 'Logout successful',
+      success: true
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Even if audit logging fails, still return success to client
+    // The logout should always succeed from user's perspective
+    res.status(200).json({
+      message: 'Logout successful',
+      success: true
+    });
   }
 });
 

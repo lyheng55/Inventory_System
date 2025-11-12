@@ -43,8 +43,10 @@ import axios from '../../utils/axios';
 import {useNavigate} from 'react-router-dom';
 import GlobalSearch from '../../components/common/GlobalSearch';
 import AdvancedSearch from '../../components/common/AdvancedSearch';
+import { useTranslation } from 'react-i18next';
 
 const SearchPage = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
   // const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
@@ -131,10 +133,10 @@ const SearchPage = () => {
       return (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="h6" color="text.secondary">
-            No search results to display
+            {t('search.noSearchResultsToDisplay')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Use the search bar above or advanced search to find what you're looking for
+            {t('search.useSearchBarOrAdvancedSearch')}
           </Typography>
         </Box>
       );
@@ -146,20 +148,20 @@ const SearchPage = () => {
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h6">
-            Search Results ({total} found)
+            {t('search.searchResults')} ({total} {t('search.found')})
           </Typography>
           <Button
             variant="outlined"
             startIcon={<FilterList />}
             onClick={() => setShowAdvancedSearch(true)}
           >
-            Advanced Search
+            {t('search.advancedSearch')}
           </Button>
         </Box>
 
         {results.length === 0 ? (
           <Alert severity="info">
-            No results found. Try adjusting your search criteria.
+            {t('search.noResultsFoundTryAdjusting')}
           </Alert>
         ) : (
           <Grid container spacing={2}>
@@ -195,7 +197,7 @@ const SearchPage = () => {
                       size="small"
                       onClick={() => handleResultClick(result)}
                     >
-                      View Details
+                      {t('search.viewDetails')}
                     </Button>
                   </CardActions>
                 </Card>
@@ -207,7 +209,7 @@ const SearchPage = () => {
         {pagination && pagination.totalPages > 1 && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
-              Page {pagination.page} of {pagination.totalPages}
+              {t('search.page')} {pagination.page} {t('search.of')} {pagination.totalPages}
             </Typography>
           </Box>
         )}
@@ -221,10 +223,10 @@ const SearchPage = () => {
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <History sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
-            No search history yet
+            {t('search.noSearchHistoryYet')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Your recent searches will appear here
+            {t('search.yourRecentSearchesWillAppearHere')}
           </Typography>
         </Box>
       );
@@ -246,7 +248,7 @@ const SearchPage = () => {
               </ListItemIcon>
               <ListItemText
                 primary={item.query}
-                secondary={`${item.entity} • ${item.resultsCount} results • ${new Date(item.timestamp).toLocaleString()}`}
+                secondary={`${item.entity} • ${item.resultsCount} ${t('search.resultsLabel')} • ${new Date(item.timestamp).toLocaleString()}`}
               />
             </ListItem>
             {index < searchHistory.length - 1 && <Divider />}
@@ -262,9 +264,9 @@ const SearchPage = () => {
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <BookmarkBorder sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
-            No saved searches yet
+            {t('search.noSavedSearchesYet')}
           </Typography>
-          <Typography variant="body2" color="text.secondary">your frequently used search filters for quick access
+          <Typography variant="body2" color="text.secondary">{t('search.yourFrequentlyUsedSearchFilters')}
           </Typography>
         </Box>
       );
@@ -283,10 +285,10 @@ const SearchPage = () => {
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {search.entity} • {search.isPublic ? 'Public' : 'Private'}
+                  {search.entity} • {search.isPublic ? t('search.public') : t('search.private')}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Created {new Date(search.createdAt).toLocaleDateString()}
+                  {t('search.created')} {new Date(search.createdAt).toLocaleDateString()}
                 </Typography>
               </CardContent>
               <CardActions>
@@ -297,7 +299,7 @@ const SearchPage = () => {
                     setShowAdvancedSearch(true);
                   }}
                 >
-                  Use Filter
+                  {t('search.useFilter')}
                 </Button>
               </CardActions>
             </Card>
@@ -311,10 +313,10 @@ const SearchPage = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Search
+          {t('search.title')}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Find products, suppliers, warehouses, users, and purchase orders across your inventory system. Type your search term and click the search button to get results.
+          {t('search.findProductsSuppliersWarehouses')}
         </Typography>
       </Box>
 
@@ -330,9 +332,9 @@ const SearchPage = () => {
           onChange={handleTabChange}
           variant="fullWidth"
         >
-          <Tab label="Search History" icon={<History />} />
-          <Tab label="Search Results" icon={<Search />} />
-          <Tab label="d Searches" icon={<Bookmark />} />
+          <Tab label={t('search.searchHistory')} icon={<History />} />
+          <Tab label={t('search.searchResults')} icon={<Search />} />
+          <Tab label={t('search.savedSearches')} icon={<Bookmark />} />
         </Tabs>
       </Paper>
 
@@ -351,7 +353,7 @@ const SearchPage = () => {
         fullWidth
       >
         <DialogTitle>
-          Advanced Search
+          {t('search.advancedSearch')}
           <IconButton
             onClick={() => setShowAdvancedSearch(false)}
             sx={{ position: 'absolute', right: 8, top: 8 }}

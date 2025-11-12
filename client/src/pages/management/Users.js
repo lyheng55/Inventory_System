@@ -55,10 +55,12 @@ import {
   useMutation,
   useQueryClient
 } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import axios from '../../utils/axios';
 import {useAuth} from '../../contexts/AuthContext';
 
 const Users = () => {
+  const { t } = useTranslation();
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   
@@ -121,6 +123,34 @@ const Users = () => {
     { enabled: isAdmin }
   );
 
+  // Fetch roles from database
+  const { data: rolesData } = useQuery(
+    'roles',
+    async () => {
+      try {
+        // The endpoint is /api/auth/permissions/roles
+        const response = await axios.get('/auth/permissions/roles');
+        // The API returns { roles: [...] }
+        if (response.data?.roles && Array.isArray(response.data.roles)) {
+          return response.data.roles;
+        } else if (Array.isArray(response.data)) {
+          return response.data;
+        } else {
+          return [];
+        }
+      } catch (error) {
+        console.warn('Failed to fetch roles from database:', error);
+        return [];
+      }
+    },
+    {
+      initialData: []
+    }
+  );
+
+  // Ensure roles is always an array
+  const roles = Array.isArray(rolesData) ? rolesData : [];
+
   // Create user mutation
   const createUserMutation = useMutation(
     (userData) => axios.post('/users', userData),
@@ -130,7 +160,7 @@ const Users = () => {
         queryClient.invalidateQueries('userStats');
         setOpenDialog(false);
         resetForm();
-        alert('User created successfully!');
+        alert(t('users.userCreatedSuccess'));
       },
       onError: (error) => {
         console.error('Create user error:', error);
@@ -161,7 +191,7 @@ const Users = () => {
         setOpenDialog(false);
         setEditingUser(null);
         resetForm();
-        alert('User updated successfully!');
+        alert(t('users.userUpdatedSuccess'));
       },
       onError: (error) => {
         console.error('Update user error:', error);
@@ -176,7 +206,7 @@ const Users = () => {
     {
       onSuccess: () => {
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        alert('Password changed successfully!');
+        alert(t('users.passwordChangedSuccess'));
       },
       onError: (error) => {
         console.error('Change password error:', error);
@@ -192,7 +222,7 @@ const Users = () => {
       onSuccess: () => {
         queryClient.invalidateQueries('users');
         queryClient.invalidateQueries('userStats');
-        alert('User deactivated successfully!');
+        alert(t('users.userDeactivatedSuccess'));
       },
       onError: (error) => {
         console.error('Deactivate user error:', error);
@@ -208,7 +238,7 @@ const Users = () => {
       onSuccess: () => {
         queryClient.invalidateQueries('users');
         queryClient.invalidateQueries('userStats');
-        alert('User reactivated successfully!');
+        alert(t('users.userReactivatedSuccess'));
       },
       onError: (error) => {
         console.error('Reactivate user error:', error);
@@ -265,12 +295,12 @@ const Users = () => {
     
     // Validate form data
     if (!formData.username || !formData.email || !formData.firstName || !formData.lastName) {
-      alert('Please fill in all required fields');
+      alert(t('users.fillAllFields'));
       return;
     }
 
     if (!editingUser && !formData.password) {
-      alert('Password is required for new users');
+      alert(t('users.passwordRequired'));
       return;
     }
 
@@ -294,12 +324,12 @@ const Users = () => {
     e.preventDefault();
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('New passwords do not match');
+      alert(t('users.passwordsDoNotMatch'));
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      alert('Password must be at least 6 characters long');
+      alert(t('users.passwordMinLength'));
       return;
     }
 
@@ -313,13 +343,13 @@ const Users = () => {
   };
 
   const handleDeactivate = (user) => {
-    if (window.confirm(`Are you sure you want to deactivate ${user.firstName} ${user.lastName}?`)) {
+    if (window.confirm(t('users.confirmDeactivate', { name: `${user.firstName} ${user.lastName}` }))) {
       deactivateUserMutation.mutate(user.id);
     }
   };
 
   const handleReactivate = (user) => {
-    if (window.confirm(`Are you sure you want to reactivate ${user.firstName} ${user.lastName}?`)) {
+    if (window.confirm(t('users.confirmReactivate', { name: `${user.firstName} ${user.lastName}` }))) {
       reactivateUserMutation.mutate(user.id);
     }
   };
@@ -346,10 +376,10 @@ const Users = () => {
 
   const getRoleLabel = (role) => {
     switch (role) {
-      case 'admin': return 'Admin';
-      case 'inventory_manager': return 'Inventory Manager';
-      case 'sales_staff': return 'Sales Staff';
-      case 'auditor': return 'Auditor';
+      case 'admin': return t('users.admin');
+      case 'inventory_manager': return t('users.inventoryManager');
+      case 'sales_staff': return t('users.salesStaff');
+      case 'auditor': return t('users.auditor');
       default: return role;
     }
   };
@@ -362,7 +392,7 @@ const Users = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
         <Alert severity="error">
-          Access denied. Only administrators can view this page.
+          {t('users.accessDenied')}
         </Alert>
       </Box>
     );
@@ -371,7 +401,7 @@ const Users = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <Typography>Loading users...</Typography>
+        <Typography>{t('users.loadingUsers')}</Typography>
       </Box>
     );
   }
@@ -379,13 +409,13 @@ const Users = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">User Management</Typography>
+        <Typography variant="h4">{t('users.userManagement')}</Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => handleOpenDialog()}
         >
-          Add User
+          {t('users.addUser')}
         </Button>
       </Box>
 
@@ -396,7 +426,7 @@ const Users = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Total Users
+                  {t('users.totalUsers')}
                 </Typography>
                 <Typography variant="h4">
                   {userStats.totalUsers}
@@ -408,7 +438,7 @@ const Users = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Active Users
+                  {t('users.activeUsers')}
                 </Typography>
                 <Typography variant="h4" color="success.main">
                   {userStats.activeUsers}
@@ -420,7 +450,7 @@ const Users = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Inactive Users
+                  {t('users.inactiveUsers')}
                 </Typography>
                 <Typography variant="h4" color="error.main">
                   {userStats.inactiveUsers}
@@ -432,7 +462,7 @@ const Users = () => {
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
-                  Admins
+                  {t('users.admins')}
                 </Typography>
                 <Typography variant="h4" color="primary.main">
                   {userStats.roleStats.find(r => r.role === 'admin')?.count || 0}
@@ -450,7 +480,7 @@ const Users = () => {
             <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
-                placeholder="Search users..."
+                placeholder={t('users.searchUsers')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 InputProps={{
@@ -464,36 +494,43 @@ const Users = () => {
             </Grid>
             <Grid item xs={12} sm={3}>
               <FormControl fullWidth>
-                <InputLabel>Role</InputLabel>
+                <InputLabel>{t('users.role')}</InputLabel>
                 <Select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  label="Role"
+                  label={t('users.role')}
                 >
-                  <MenuItem value="">All Roles</MenuItem>
-                  <MenuItem value="admin">Admin</MenuItem>
-                  <MenuItem value="inventory_manager">Inventory Manager</MenuItem>
-                  <MenuItem value="sales_staff">Sales Staff</MenuItem>
-                  <MenuItem value="auditor">Auditor</MenuItem>
+                  <MenuItem value="">{t('users.allRoles')}</MenuItem>
+                  {roles.length === 0 ? (
+                    <MenuItem disabled value="">
+                      <em>Loading roles...</em>
+                    </MenuItem>
+                  ) : (
+                    roles.map((role) => (
+                      <MenuItem key={role.id} value={role.name}>
+                        {role.displayName || role.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={3}>
               <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
+                <InputLabel>{t('common.status')}</InputLabel>
                 <Select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  label="Status"
+                  label={t('common.status')}
                 >
-                  <MenuItem value="">All Status</MenuItem>
-                  <MenuItem value="true">Active</MenuItem>
-                  <MenuItem value="false">Inactive</MenuItem>
+                  <MenuItem value="">{t('users.allStatus')}</MenuItem>
+                  <MenuItem value="true">{t('users.active')}</MenuItem>
+                  <MenuItem value="false">{t('users.inactive')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={2}>
-              <Button
+                <Button
                 fullWidth
                 variant="outlined"
                 onClick={() => {
@@ -502,7 +539,7 @@ const Users = () => {
                   setStatusFilter('');
                 }}
               >
-                Clear
+                {t('common.clear')}
               </Button>
             </Grid>
           </Grid>
@@ -515,13 +552,13 @@ const Users = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>User</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Role</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Last Login</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>{t('users.user')}</TableCell>
+                <TableCell>{t('users.email')}</TableCell>
+                <TableCell>{t('users.role')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('users.lastLogin')}</TableCell>
+                <TableCell>{t('users.created')}</TableCell>
+                <TableCell>{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -553,18 +590,18 @@ const Users = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={user.isActive ? 'Active' : 'Inactive'}
+                      label={user.isActive ? t('users.active') : t('users.inactive')}
                       color={user.isActive ? 'success' : 'error'}
                       size="small"
                     />
                   </TableCell>
                   <TableCell>
-                    {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
+                    {user.lastLogin ? formatDate(user.lastLogin) : t('users.never')}
                   </TableCell>
                   <TableCell>{formatDate(user.createdAt)}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Tooltip title="Edit User">
+                      <Tooltip title={t('users.editUser')}>
                         <IconButton
                           size="small"
                           onClick={() => handleOpenDialog(user)}
@@ -573,7 +610,7 @@ const Users = () => {
                         </IconButton>
                       </Tooltip>
                       {user.isActive ? (
-                        <Tooltip title="Deactivate User">
+                        <Tooltip title={t('users.deactivateUser')}>
                           <IconButton
                             size="small"
                             onClick={() => handleDeactivate(user)}
@@ -583,7 +620,7 @@ const Users = () => {
                           </IconButton>
                         </Tooltip>
                       ) : (
-                        <Tooltip title="Reactivate User">
+                        <Tooltip title={t('users.reactivateUser')}>
                           <IconButton
                             size="small"
                             onClick={() => handleReactivate(user)}
@@ -615,12 +652,12 @@ const Users = () => {
       {/* User Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingUser ? 'Edit User' : 'Add New User'}
+          {editingUser ? t('users.editUser') : t('users.addNewUser')}
         </DialogTitle>
         <DialogContent>
           <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>
-            <Tab label="User Details" />
-            {editingUser && <Tab label="Change Password" />}
+            <Tab label={t('users.userDetails')} />
+            {editingUser && <Tab label={t('users.changePassword')} />}
           </Tabs>
 
           {tabValue === 0 && (
@@ -629,7 +666,7 @@ const Users = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Username"
+                    label={t('users.username')}
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     required
@@ -639,7 +676,7 @@ const Users = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Email"
+                    label={t('users.email')}
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -649,7 +686,7 @@ const Users = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="First Name"
+                    label={t('users.firstName')}
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     required
@@ -658,7 +695,7 @@ const Users = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Last Name"
+                    label={t('users.lastName')}
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     required
@@ -668,7 +705,7 @@ const Users = () => {
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="Password"
+                      label={t('users.password')}
                       type={showPasswords.password ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -689,16 +726,24 @@ const Users = () => {
                 )}
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth>
-                    <InputLabel>Role</InputLabel>
+                    <InputLabel>{t('users.role')}</InputLabel>
                     <Select
                       value={formData.role}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      label="Role"
+                      label={t('users.role')}
+                      disabled={roles.length === 0}
                     >
-                      <MenuItem value="sales_staff">Sales Staff</MenuItem>
-                      <MenuItem value="inventory_manager">Inventory Manager</MenuItem>
-                      <MenuItem value="auditor">Auditor</MenuItem>
-                      <MenuItem value="admin">Admin</MenuItem>
+                      {roles.length === 0 ? (
+                        <MenuItem disabled value="">
+                          <em>Loading roles...</em>
+                        </MenuItem>
+                      ) : (
+                        roles.map((role) => (
+                          <MenuItem key={role.id} value={role.name}>
+                            {role.displayName || role.name}
+                          </MenuItem>
+                        ))
+                      )}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -710,7 +755,7 @@ const Users = () => {
                         onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                       />
                     }
-                    label="Active"
+                    label={t('users.isActive')}
                   />
                 </Grid>
               </Grid>
@@ -723,7 +768,7 @@ const Users = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Current Password"
+                    label={t('users.currentPassword')}
                     type={showPasswords.current ? 'text' : 'password'}
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
@@ -744,7 +789,7 @@ const Users = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="New Password"
+                    label={t('users.newPassword')}
                     type={showPasswords.new ? 'text' : 'password'}
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
@@ -765,7 +810,7 @@ const Users = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Confirm New Password"
+                    label={t('users.confirmNewPassword')}
                     type={showPasswords.confirm ? 'text' : 'password'}
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
@@ -788,7 +833,7 @@ const Users = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}></Button>
+          <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
           {tabValue === 0 ? (
             <Button
               onClick={handleSubmit}
@@ -796,7 +841,7 @@ const Users = () => {
               startIcon={<Save />}
               disabled={createUserMutation.isLoading || updateUserMutation.isLoading}
             >
-              {editingUser ? 'Update' : 'Create'}
+              {editingUser ? t('common.update') : t('common.create')}
             </Button>
           ) : (
             <Button
@@ -805,7 +850,7 @@ const Users = () => {
               startIcon={<Save />}
               disabled={changePasswordMutation.isLoading}
             >
-              Change Password
+              {t('users.changePassword')}
             </Button>
           )}
         </DialogActions>

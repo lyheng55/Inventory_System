@@ -33,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from 'react-query';
 import axios from '../../utils/axios';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart,
   Line,
@@ -52,6 +53,7 @@ import {
 } from 'recharts';
 
 const Analytics = () => {
+  const { t } = useTranslation();
   const [tabValue, setTabValue] = useState(0);
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -65,10 +67,10 @@ const Analytics = () => {
   });
 
   const analyticsTypes = [
-    { id: 0, name: 'Sales Trends', endpoint: 'sales-trends', icon: <TrendingUp /> },
-    { id: 1, name: 'Inventory Turnover', endpoint: 'inventory-turnover', icon: <Speed /> },
-    { id: 2, name: 'Cost Analysis', endpoint: 'cost-analysis', icon: <AttachMoney /> },
-    { id: 3, name: 'Profitability', endpoint: 'profitability', icon: <Assessment /> }
+    { id: 0, name: t('analytics.salesTrends'), endpoint: 'sales-trends', icon: <TrendingUp /> },
+    { id: 1, name: t('analytics.inventoryTurnover'), endpoint: 'inventory-turnover', icon: <Speed /> },
+    { id: 2, name: t('analytics.costAnalysis'), endpoint: 'cost-analysis', icon: <AttachMoney /> },
+    { id: 3, name: t('analytics.profitability'), endpoint: 'profitability', icon: <Assessment /> }
   ];
 
   const currentAnalytics = analyticsTypes[tabValue];
@@ -126,10 +128,10 @@ const Analytics = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Total Revenue</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.totalRevenue')}</Typography>
                 <Typography variant="h5">{formatCurrency(summary.totalRevenue)}</Typography>
                 <Typography variant="body2" color={summary.growthRate >= 0 ? 'success.main' : 'error.main'}>
-                  {summary.growthRate >= 0 ? '+' : ''}{summary.growthRate.toFixed(2)}% Growth
+                  {summary.growthRate >= 0 ? '+' : ''}{summary.growthRate.toFixed(2)}% {t('analytics.growth')}
                 </Typography>
               </CardContent>
             </Card>
@@ -137,27 +139,27 @@ const Analytics = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Total Profit</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.totalProfit')}</Typography>
                 <Typography variant="h5">{formatCurrency(summary.totalProfit)}</Typography>
-                <Typography variant="body2">Margin: {summary.profitMargin.toFixed(2)}%</Typography>
+                <Typography variant="body2">{t('analytics.margin')}: {summary.profitMargin.toFixed(2)}%</Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Total Transactions</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.totalTransactions')}</Typography>
                 <Typography variant="h5">{formatNumber(summary.totalTransactions)}</Typography>
-                <Typography variant="body2">Avg: {formatCurrency(summary.averageTransactionValue)}</Typography>
+                <Typography variant="body2">{t('analytics.avg')}: {formatCurrency(summary.averageTransactionValue)}</Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Units Sold</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.unitsSold')}</Typography>
                 <Typography variant="h5">{formatNumber(summary.totalQuantity)}</Typography>
-                <Typography variant="body2">{summary.interval} tracking</Typography>
+                <Typography variant="body2">{summary.interval} {t('analytics.tracking')}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -166,7 +168,7 @@ const Analytics = () => {
         {/* Sales Trend Chart */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Typography variant="h6" gutterBottom>Sales Trend</Typography>
+            <Typography variant="h6" gutterBottom>{t('analytics.salesTrend')}</Typography>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={timeSeriesData}>
                 <defs>
@@ -184,8 +186,8 @@ const Analytics = () => {
                 <YAxis />
                 <Tooltip formatter={(value) => formatCurrency(value)} />
                 <Legend />
-                <Area type="monotone" dataKey="revenue" stroke="#8884d8" fillOpacity={1} fill="url(#colorRevenue)" name="Revenue" />
-                <Area type="monotone" dataKey="profit" stroke="#82ca9d" fillOpacity={1} fill="url(#colorProfit)" name="Profit" />
+                <Area type="monotone" dataKey="revenue" stroke="#8884d8" fillOpacity={1} fill="url(#colorRevenue)" name={t('analytics.revenue')} />
+                <Area type="monotone" dataKey="profit" stroke="#82ca9d" fillOpacity={1} fill="url(#colorProfit)" name={t('analytics.profit')} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -196,14 +198,14 @@ const Analytics = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Top 10 Products by Revenue</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.topProducts')}</Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={topProducts}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                     <YAxis />
                     <Tooltip formatter={(value) => formatCurrency(value)} />
-                    <Bar dataKey="revenue" fill="#8884d8" name="Revenue" />
+                    <Bar dataKey="revenue" fill="#8884d8" name={t('analytics.revenue')} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -214,7 +216,7 @@ const Analytics = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Revenue by Category</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.revenueByCategory')}</Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -253,37 +255,37 @@ const Analytics = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Avg Turnover Ratio</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.avgTurnoverRatio')}</Typography>
                 <Typography variant="h5">{summary.averageTurnoverRatio.toFixed(2)}</Typography>
-                <Typography variant="body2">Times per period</Typography>
+                <Typography variant="body2">{t('analytics.timesPerPeriod')}</Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Avg Days to Sell</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.avgDaysToSell')}</Typography>
                 <Typography variant="h5">{summary.averageDaysToSell.toFixed(1)}</Typography>
-                <Typography variant="body2">Days</Typography>
+                <Typography variant="body2">{t('analytics.days')}</Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Inventory Value</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.inventoryValue')}</Typography>
                 <Typography variant="h5">{formatCurrency(summary.totalInventoryValue)}</Typography>
-                <Typography variant="body2">{summary.totalProducts} products</Typography>
+                <Typography variant="body2">{summary.totalProducts} {t('analytics.products')}</Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Stock Status</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.stockStatus')}</Typography>
                 <Typography variant="h5">{summary.fastMovingProducts}</Typography>
                 <Typography variant="body2">
-                  Fast | {summary.slowMovingProducts} Slow | {summary.deadStock} Dead
+                  {t('analytics.fastMoving')} | {summary.slowMovingProducts} {t('analytics.slowMoving')} | {summary.deadStock} {t('analytics.deadStock')}
                 </Typography>
               </CardContent>
             </Card>
@@ -295,7 +297,7 @@ const Analytics = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Category Turnover Rates</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.categoryTurnoverRates')}</Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={categoryTurnover}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -303,7 +305,7 @@ const Analytics = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="averageTurnover" fill="#82ca9d" name="Avg Turnover" />
+                    <Bar dataKey="averageTurnover" fill="#82ca9d" name={t('analytics.avgTurnover')} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -314,14 +316,14 @@ const Analytics = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Stock Movement Distribution</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.stockMovementDistribution')}</Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Fast Moving', value: summary.fastMovingProducts },
-                        { name: 'Slow Moving', value: summary.slowMovingProducts },
-                        { name: 'Dead Stock', value: summary.deadStock }
+                        { name: t('analytics.fastMoving'), value: summary.fastMovingProducts },
+                        { name: t('analytics.slowMoving'), value: summary.slowMovingProducts },
+                        { name: t('analytics.deadStock'), value: summary.deadStock }
                       ]}
                       dataKey="value"
                       nameKey="name"
@@ -346,14 +348,14 @@ const Analytics = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Top Fast Moving Products</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.topFastMovingProducts')}</Typography>
                 <TableContainer component={Paper}>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Product</TableCell>
-                        <TableCell align="right">Turnover</TableCell>
-                        <TableCell align="right">Days to Sell</TableCell>
+                        <TableCell>{t('common.product')}</TableCell>
+                        <TableCell align="right">{t('analytics.turnover')}</TableCell>
+                        <TableCell align="right">{t('analytics.daysToSell')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -376,14 +378,14 @@ const Analytics = () => {
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom color="error">Dead Stock Items</Typography>
+                  <Typography variant="h6" gutterBottom color="error">{t('analytics.deadStockItems')}</Typography>
                   <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Product</TableCell>
-                          <TableCell align="right">Stock</TableCell>
-                          <TableCell align="right">Value</TableCell>
+                          <TableCell>{t('common.product')}</TableCell>
+                          <TableCell align="right">{t('analytics.stock')}</TableCell>
+                          <TableCell align="right">{t('analytics.value')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -418,36 +420,36 @@ const Analytics = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Total Costs</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.totalCosts')}</Typography>
                 <Typography variant="h5">{formatCurrency(summary.totalCosts)}</Typography>
-                <Typography variant="body2">All cost types</Typography>
+                <Typography variant="body2">{t('analytics.allCostTypes')}</Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Procurement</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.procurement')}</Typography>
                 <Typography variant="h5">{formatCurrency(summary.totalProcurementCost)}</Typography>
-                <Typography variant="body2">Purchase costs</Typography>
+                <Typography variant="body2">{t('analytics.purchaseCosts')}</Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Holding Costs</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.holdingCosts')}</Typography>
                 <Typography variant="h5">{formatCurrency(summary.totalHoldingCost)}</Typography>
-                <Typography variant="body2">{summary.holdingCostPercentage.toFixed(2)}% of total</Typography>
+                <Typography variant="body2">{summary.holdingCostPercentage.toFixed(2)}% {t('analytics.ofTotal')}</Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Shrinkage</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.shrinkage')}</Typography>
                 <Typography variant="h5">{formatCurrency(summary.totalShrinkageCost)}</Typography>
-                <Typography variant="body2">{summary.shrinkageCostPercentage.toFixed(2)}% of total</Typography>
+                <Typography variant="body2">{summary.shrinkageCostPercentage.toFixed(2)}% {t('analytics.ofTotal')}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -458,14 +460,14 @@ const Analytics = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Cost Breakdown</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.costBreakdown')}</Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Procurement', value: summary.totalProcurementCost },
-                        { name: 'Holding', value: summary.totalHoldingCost },
-                        { name: 'Shrinkage', value: summary.totalShrinkageCost }
+                        { name: t('analytics.procurement'), value: summary.totalProcurementCost },
+                        { name: t('analytics.holdingCosts'), value: summary.totalHoldingCost },
+                        { name: t('analytics.shrinkage'), value: summary.totalShrinkageCost }
                       ]}
                       dataKey="value"
                       nameKey="name"
@@ -489,7 +491,7 @@ const Analytics = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Costs by Category</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.costsByCategory')}</Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={categoryCosts.slice(0, 10)}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -497,9 +499,9 @@ const Analytics = () => {
                     <YAxis />
                     <Tooltip formatter={(value) => formatCurrency(value)} />
                     <Legend />
-                    <Bar dataKey="procurementCost" stackId="a" fill="#2196F3" name="Procurement" />
-                    <Bar dataKey="holdingCost" stackId="a" fill="#FF9800" name="Holding" />
-                    <Bar dataKey="shrinkageCost" stackId="a" fill="#F44336" name="Shrinkage" />
+                    <Bar dataKey="procurementCost" stackId="a" fill="#2196F3" name={t('analytics.procurement')} />
+                    <Bar dataKey="holdingCost" stackId="a" fill="#FF9800" name={t('analytics.holdingCosts')} />
+                    <Bar dataKey="shrinkageCost" stackId="a" fill="#F44336" name={t('analytics.shrinkage')} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -510,23 +512,23 @@ const Analytics = () => {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Profitability Metrics</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.profitabilityMetrics')}</Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={3}>
                     <Paper elevation={2} sx={{ p: 2 }}>
-                      <Typography color="textSecondary" gutterBottom>Revenue</Typography>
+                      <Typography color="textSecondary" gutterBottom>{t('analytics.revenue')}</Typography>
                       <Typography variant="h6">{formatCurrency(summary.totalRevenue)}</Typography>
                     </Paper>
                   </Grid>
                   <Grid item xs={12} sm={3}>
                     <Paper elevation={2} sx={{ p: 2 }}>
-                      <Typography color="textSecondary" gutterBottom>Gross Profit</Typography>
+                      <Typography color="textSecondary" gutterBottom>{t('analytics.grossProfit')}</Typography>
                       <Typography variant="h6">{formatCurrency(summary.grossProfit)}</Typography>
                     </Paper>
                   </Grid>
                   <Grid item xs={12} sm={3}>
                     <Paper elevation={2} sx={{ p: 2 }}>
-                      <Typography color="textSecondary" gutterBottom>Net Profit</Typography>
+                      <Typography color="textSecondary" gutterBottom>{t('analytics.netProfit')}</Typography>
                       <Typography variant="h6" color={summary.netProfit >= 0 ? 'success.main' : 'error.main'}>
                         {formatCurrency(summary.netProfit)}
                       </Typography>
@@ -534,7 +536,7 @@ const Analytics = () => {
                   </Grid>
                   <Grid item xs={12} sm={3}>
                     <Paper elevation={2} sx={{ p: 2 }}>
-                      <Typography color="textSecondary" gutterBottom>Profit Margin</Typography>
+                      <Typography color="textSecondary" gutterBottom>{t('analytics.profitMargin')}</Typography>
                       <Typography variant="h6" color={summary.profitMargin >= 0 ? 'success.main' : 'error.main'}>
                         {summary.profitMargin.toFixed(2)}%
                       </Typography>
@@ -561,7 +563,7 @@ const Analytics = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Total Revenue</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.totalRevenue')}</Typography>
                 <Typography variant="h5">{formatCurrency(summary.totalRevenue)}</Typography>
               </CardContent>
             </Card>
@@ -569,7 +571,7 @@ const Analytics = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Total Profit</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.totalProfit')}</Typography>
                 <Typography variant="h5" color={summary.totalProfit >= 0 ? 'success.main' : 'error.main'}>
                   {formatCurrency(summary.totalProfit)}
                 </Typography>
@@ -579,7 +581,7 @@ const Analytics = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Profit Margin</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.profitMargin')}</Typography>
                 <Typography variant="h5">{summary.averageMargin.toFixed(2)}%</Typography>
               </CardContent>
             </Card>
@@ -587,10 +589,10 @@ const Analytics = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" gutterBottom>Product Status</Typography>
+                <Typography color="textSecondary" gutterBottom>{t('analytics.productStatus')}</Typography>
                 <Typography variant="body2">
-                  <Chip label={`${summary.profitableProducts} Profitable`} color="success" size="small" sx={{ mr: 1 }} />
-                  <Chip label={`${summary.unprofitableProducts} Loss`} color="error" size="small" />
+                  <Chip label={`${summary.profitableProducts} ${t('analytics.profitable')}`} color="success" size="small" sx={{ mr: 1 }} />
+                  <Chip label={`${summary.unprofitableProducts} ${t('analytics.loss')}`} color="error" size="small" />
                 </Typography>
               </CardContent>
             </Card>
@@ -602,7 +604,7 @@ const Analytics = () => {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Category Profitability</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.categoryProfitability')}</Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={categoryProfitability}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -610,8 +612,8 @@ const Analytics = () => {
                     <YAxis />
                     <Tooltip formatter={(value, name) => [formatCurrency(value), name]} />
                     <Legend />
-                    <Bar dataKey="revenue" fill="#8884d8" name="Revenue" />
-                    <Bar dataKey="profit" fill="#82ca9d" name="Profit" />
+                    <Bar dataKey="revenue" fill="#8884d8" name={t('analytics.revenue')} />
+                    <Bar dataKey="profit" fill="#82ca9d" name={t('analytics.profit')} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -622,15 +624,15 @@ const Analytics = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Top 10 Most Profitable Products</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.topMostProfitableProducts')}</Typography>
                 <TableContainer component={Paper}>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Product</TableCell>
-                        <TableCell align="right">Revenue</TableCell>
-                        <TableCell align="right">Profit</TableCell>
-                        <TableCell align="right">Margin</TableCell>
+                        <TableCell>{t('common.product')}</TableCell>
+                        <TableCell align="right">{t('analytics.revenue')}</TableCell>
+                        <TableCell align="right">{t('analytics.profit')}</TableCell>
+                        <TableCell align="right">{t('analytics.margin')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -653,15 +655,15 @@ const Analytics = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Least Profitable Products</Typography>
+                <Typography variant="h6" gutterBottom>{t('analytics.leastProfitableProducts')}</Typography>
                 <TableContainer component={Paper}>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Product</TableCell>
-                        <TableCell align="right">Revenue</TableCell>
-                        <TableCell align="right">Profit</TableCell>
-                        <TableCell align="right">Margin</TableCell>
+                        <TableCell>{t('common.product')}</TableCell>
+                        <TableCell align="right">{t('analytics.revenue')}</TableCell>
+                        <TableCell align="right">{t('analytics.profit')}</TableCell>
+                        <TableCell align="right">{t('analytics.margin')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -685,20 +687,20 @@ const Analytics = () => {
             <Grid item xs={12}>
               <Card>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom color="error">Unprofitable Products</Typography>
+                  <Typography variant="h6" gutterBottom color="error">{t('analytics.unprofitableProducts')}</Typography>
                   <Alert severity="error" sx={{ mb: 2 }}>
-                    {unprofitable.length} products are operating at a loss!
+                    {unprofitable.length} {t('analytics.productsOperatingAtLoss')}
                   </Alert>
                   <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Product</TableCell>
-                          <TableCell>Category</TableCell>
-                          <TableCell align="right">Revenue</TableCell>
-                          <TableCell align="right">Cost</TableCell>
-                          <TableCell align="right">Loss</TableCell>
-                          <TableCell align="right">Margin</TableCell>
+                          <TableCell>{t('common.product')}</TableCell>
+                          <TableCell>{t('common.category')}</TableCell>
+                          <TableCell align="right">{t('analytics.revenue')}</TableCell>
+                          <TableCell align="right">{t('analytics.cost')}</TableCell>
+                          <TableCell align="right">{t('analytics.loss')}</TableCell>
+                          <TableCell align="right">{t('analytics.margin')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -731,10 +733,10 @@ const Analytics = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Advanced Analytics
+        {t('analytics.advancedAnalytics')}
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Comprehensive business intelligence and performance analytics
+        {t('analytics.comprehensiveBusinessIntelligence')}
       </Typography>
 
       {/* Filters */}
@@ -744,7 +746,7 @@ const Analytics = () => {
             <Grid item xs={12} sm={6} md={2}>
               <TextField
                 fullWidth
-                label="Start Date"
+                label={t('reports.startDate')}
                 type="date"
                 value={dateRange.startDate}
                 onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
@@ -755,7 +757,7 @@ const Analytics = () => {
             <Grid item xs={12} sm={6} md={2}>
               <TextField
                 fullWidth
-                label="End Date"
+                label={t('reports.endDate')}
                 type="date"
                 value={dateRange.endDate}
                 onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
@@ -766,29 +768,29 @@ const Analytics = () => {
             {tabValue === 0 && (
               <Grid item xs={12} sm={6} md={2}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Interval</InputLabel>
+                  <InputLabel>{t('analytics.interval')}</InputLabel>
                   <Select
                     value={filters.interval}
                     onChange={(e) => setFilters({ ...filters, interval: e.target.value })}
-                    label="Interval"
+                    label={t('analytics.interval')}
                   >
-                    <MenuItem value="hourly">Hourly</MenuItem>
-                    <MenuItem value="daily">Daily</MenuItem>
-                    <MenuItem value="weekly">Weekly</MenuItem>
-                    <MenuItem value="monthly">Monthly</MenuItem>
+                    <MenuItem value="hourly">{t('analytics.hourly')}</MenuItem>
+                    <MenuItem value="daily">{t('analytics.daily')}</MenuItem>
+                    <MenuItem value="weekly">{t('analytics.weekly')}</MenuItem>
+                    <MenuItem value="monthly">{t('analytics.monthly')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
             )}
             <Grid item xs={12} sm={6} md={2}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Warehouse</InputLabel>
-                <Select
-                  value={filters.warehouseId}
-                  onChange={(e) => setFilters({ ...filters, warehouseId: e.target.value })}
-                  label="Warehouse"
-                >
-                  <MenuItem value="">All Warehouses</MenuItem>
+                <FormControl fullWidth size="small">
+                  <InputLabel>{t('common.warehouse')}</InputLabel>
+                  <Select
+                    value={filters.warehouseId}
+                    onChange={(e) => setFilters({ ...filters, warehouseId: e.target.value })}
+                    label={t('common.warehouse')}
+                  >
+                    <MenuItem value="">{t('reports.allWarehouses')}</MenuItem>
                   {warehouses?.map((w) => (
                     <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>
                   ))}
@@ -796,14 +798,14 @@ const Analytics = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6} md={2}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={filters.categoryId}
-                  onChange={(e) => setFilters({ ...filters, categoryId: e.target.value })}
-                  label="Category"
-                >
-                  <MenuItem value="">All Categories</MenuItem>
+                <FormControl fullWidth size="small">
+                  <InputLabel>{t('common.category')}</InputLabel>
+                  <Select
+                    value={filters.categoryId}
+                    onChange={(e) => setFilters({ ...filters, categoryId: e.target.value })}
+                    label={t('common.category')}
+                  >
+                    <MenuItem value="">{t('reports.allCategories')}</MenuItem>
                   {categories?.map((c) => (
                     <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
                   ))}
@@ -818,7 +820,7 @@ const Analytics = () => {
                 onClick={() => refetch()}
                 size="large"
               >
-                Refresh
+                {t('common.refresh')}
               </Button>
             </Grid>
           </Grid>
@@ -852,7 +854,7 @@ const Analytics = () => {
 
           {error && (
             <Alert severity="error">
-              {error?.response?.data?.error || 'Failed to load analytics data'}
+              {error?.response?.data?.error || t('analytics.failedToLoadAnalyticsData')}
             </Alert>
           )}
 

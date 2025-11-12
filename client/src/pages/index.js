@@ -15,6 +15,10 @@ export { default as Suppliers } from './management/Suppliers';
 export { default as Warehouses } from './management/Warehouses';
 export { default as Users } from './management/Users';
 export { default as PurchaseOrders } from './management/PurchaseOrders';
+export { default as POS } from './management/POS';
+export { default as Permissions } from './management/Permissions';
+export { default as AuditLogs } from './management/AuditLogs';
+export { default as BackupRestore } from './management/BackupRestore';
 
 // Reports pages
 export { default as Reports } from './reports/Reports';

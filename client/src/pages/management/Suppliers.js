@@ -34,9 +34,11 @@ import {
   useMutation,
   useQueryClient
 } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import axios from '../../utils/axios';
 
 const Suppliers = () => {
+  const { t } = useTranslation();
   const [openDialog, setOpenDialog] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [formData, setFormData] = useState({
@@ -157,7 +159,7 @@ const Suppliers = () => {
   };
 
   const handleDelete = (supplier) => {
-    if (window.confirm(`Are you sure you want to delete ${supplier.name}?`)) {
+    if (window.confirm(t('suppliers.confirmDelete', { name: supplier.name }))) {
       deleteSupplierMutation.mutate(supplier.id);
     }
   };
@@ -165,7 +167,7 @@ const Suppliers = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <Typography>Loading suppliers...</Typography>
+        <Typography>{t('common.loading')}</Typography>
       </Box>
     );
   }
@@ -174,14 +176,14 @@ const Suppliers = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Suppliers
+          {t('suppliers.title')}
         </Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => handleOpenDialog()}
         >
-          Add Supplier
+          {t('suppliers.addSupplier')}
         </Button>
       </Box>
 
@@ -190,13 +192,13 @@ const Suppliers = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Contact</TableCell>
-                <TableCell>Location</TableCell>
-                <TableCell>Payment Terms</TableCell>
-                <TableCell>Rating</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>{t('common.name')}</TableCell>
+                <TableCell>{t('suppliers.contactPerson')}</TableCell>
+                <TableCell>{t('suppliers.location')}</TableCell>
+                <TableCell>{t('suppliers.paymentTerms')}</TableCell>
+                <TableCell>{t('suppliers.rating')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -245,7 +247,7 @@ const Suppliers = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={supplier.isActive ? 'Active' : 'Inactive'}
+                      label={supplier.isActive ? t('common.active') : t('common.inactive')}
                       color={supplier.isActive ? 'success' : 'default'}
                       size="small"
                     />
@@ -268,7 +270,7 @@ const Suppliers = () => {
       {/* Add/Edit Supplier Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}
+          {editingSupplier ? t('suppliers.editSupplier') : t('suppliers.addSupplier')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
@@ -276,7 +278,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Supplier Name"
+                  label={t('suppliers.supplierName')}
                   name="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -286,7 +288,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Contact Person"
+                  label={t('suppliers.contactPerson')}
                   name="contactPerson"
                   value={formData.contactPerson}
                   onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
@@ -295,7 +297,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Email"
+                  label={t('suppliers.email')}
                   name="email"
                   type="email"
                   value={formData.email}
@@ -305,7 +307,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Phone"
+                  label={t('suppliers.phone')}
                   name="phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -314,7 +316,7 @@ const Suppliers = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Address"
+                  label={t('suppliers.address')}
                   name="address"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -325,7 +327,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
-                  label="City"
+                  label={t('suppliers.city')}
                   name="city"
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -334,7 +336,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
-                  label="State"
+                  label={t('suppliers.state')}
                   name="state"
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
@@ -343,7 +345,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
-                  label="Zip Code"
+                  label={t('suppliers.zipCode')}
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
@@ -352,7 +354,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Country"
+                  label={t('suppliers.country')}
                   name="country"
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
@@ -361,7 +363,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Tax ID"
+                  label={t('suppliers.taxId')}
                   name="taxId"
                   value={formData.taxId}
                   onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
@@ -370,7 +372,7 @@ const Suppliers = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Payment Terms"
+                  label={t('suppliers.paymentTerms')}
                   name="paymentTerms"
                   value={formData.paymentTerms}
                   onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
@@ -378,7 +380,7 @@ const Suppliers = () => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Box>
-                  <Typography component="legend">Rating</Typography>
+                  <Typography component="legend">{t('suppliers.rating')}</Typography>
                   <Rating
                     name="rating"
                     value={formData.rating}
@@ -391,9 +393,9 @@ const Suppliers = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained">
-              {editingSupplier ? 'Update' : 'Create'}
+              {editingSupplier ? t('common.update') : t('common.create')}
             </Button>
           </DialogActions>
         </form>

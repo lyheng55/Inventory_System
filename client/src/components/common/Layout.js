@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Drawer,
@@ -32,30 +32,42 @@ import {
   People,
   Search,
   QrCode,
-  TrendingUp
+  TrendingUp,
+  PointOfSale,
+  Security,
+  Backup
 } from '@mui/icons-material';
 import {
   useNavigate,
   useLocation
 } from 'react-router-dom';
 import {useAuth} from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { usePermissions } from '../../hooks/usePermissions';
+import LanguageSwitcher from './LanguageSwitcher';
 // import Realtime from '../realtime/Realtime'; // Component not found
 
 const drawerWidth = 240;
 
-const menuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
-  { text: 'Search', icon: <Search />, path: '/search' },
-  { text: 'Products', icon: <Inventory />, path: '/products' },
-  { text: 'Stock', icon: <Warehouse />, path: '/stock' },
-  { text: 'Categories', icon: <Category />, path: '/categories' },
-  { text: 'Suppliers', icon: <LocalShipping />, path: '/suppliers' },
-  { text: 'Warehouses', icon: <Warehouse />, path: '/warehouses' },
-  { text: 'Purchase Orders', icon: <ShoppingCart />, path: '/purchase-orders' },
-  { text: 'Barcodes', icon: <QrCode />, path: '/barcodes' },
-  { text: 'Reports', icon: <Assessment />, path: '/reports' },
-  { text: 'Analytics', icon: <TrendingUp />, path: '/analytics' },
-  { text: 'Users', icon: <People />, path: '/users', adminOnly: true }
+// Menu items will be translated in the component
+// Each item can have a 'permission' key that maps to PERMISSIONS constant
+const getMenuItems = (t) => [
+  { text: t('common.dashboard'), icon: <Dashboard />, path: '/dashboard', permission: 'VIEW_DASHBOARD' },
+  { text: t('common.search'), icon: <Search />, path: '/search', permission: 'USE_SEARCH' },
+  { text: t('common.products'), icon: <Inventory />, path: '/products', permission: 'VIEW_PRODUCTS' },
+  { text: t('common.stock'), icon: <Warehouse />, path: '/stock', permission: 'VIEW_STOCK' },
+  { text: t('common.categories'), icon: <Category />, path: '/categories', permission: 'VIEW_CATEGORIES' },
+  { text: t('common.suppliers'), icon: <LocalShipping />, path: '/suppliers', permission: 'VIEW_SUPPLIERS' },
+  { text: t('common.warehouses'), icon: <Warehouse />, path: '/warehouses', permission: 'VIEW_WAREHOUSES' },
+  { text: t('common.purchaseOrders'), icon: <ShoppingCart />, path: '/purchase-orders', permission: 'VIEW_PURCHASE_ORDERS' },
+  { text: t('common.pos'), icon: <PointOfSale />, path: '/pos', permission: 'VIEW_POS' },
+  { text: t('common.barcodes'), icon: <QrCode />, path: '/barcodes', permission: 'VIEW_BARCODES' },
+  { text: t('common.reports'), icon: <Assessment />, path: '/reports', permission: 'VIEW_REPORTS' },
+  { text: t('common.analytics'), icon: <TrendingUp />, path: '/analytics', permission: 'VIEW_ANALYTICS' },
+  { text: t('common.users'), icon: <People />, path: '/users', permission: 'VIEW_USERS' },
+  { text: t('common.permissions'), icon: <Security />, path: '/permissions', permission: 'VIEW_USERS' },
+  { text: t('common.auditLogs'), icon: <Security />, path: '/audit-logs', permission: 'VIEW_USERS' },
+  { text: t('common.backupRestore'), icon: <Backup />, path: '/backup-restore', permission: 'VIEW_USERS' }
 ];
 
 const Layout = ({ children }) => {
@@ -66,6 +78,8 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
+  const { checkPermission, PERMISSIONS, loading: permissionsLoading } = usePermissions();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -79,9 +93,9 @@ const Layout = ({ children }) => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
     handleProfileMenuClose();
+    await logout();
   };
 
   const handleNavigation = (path) => {
@@ -90,6 +104,36 @@ const Layout = ({ children }) => {
       setMobileOpen(false);
     }
   };
+
+  // Filter menu items based on user permissions - hide items user doesn't have access to
+  const menuItems = useMemo(() => {
+    // If user is not loaded yet or permissions are still loading, return empty array
+    if (!user || permissionsLoading) {
+      return [];
+    }
+
+    return getMenuItems(t).filter(item => {
+      // If item has no permission requirement, show it (like profile)
+      if (!item.permission) {
+        return true;
+      }
+      
+      // Get the permission key from PERMISSIONS constant
+      const permissionKey = PERMISSIONS[item.permission];
+      
+      // If permission key doesn't exist, hide the item
+      if (!permissionKey) {
+        console.warn(`Permission key not found for menu item: ${item.text} (${item.permission})`);
+        return false;
+      }
+      
+      // Check if user has the required permission (from database)
+      const hasPermission = checkPermission(permissionKey);
+      
+      // Only show menu item if user has permission - hide if they don't
+      return hasPermission;
+    });
+  }, [t, checkPermission, PERMISSIONS, user, permissionsLoading]);
 
   const drawer = (
     <Box>
@@ -100,9 +144,7 @@ const Layout = ({ children }) => {
       </Toolbar>
       <Divider />
       <List>
-        {menuItems
-          .filter(item => !item.adminOnly || user?.role === 'admin')
-          .map((item) => (
+        {menuItems.map((item) => (
             <ListItem key={item.text} disablePadding>
               <ListItemButton
                 selected={location.pathname === item.path}
@@ -139,9 +181,10 @@ const Layout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {menuItems.find(item => item.path === location.pathname)?.text || 'Dashboard'}
+            {menuItems.find(item => item.path === location.pathname)?.text || t('common.dashboard')}
           </Typography>
           {/* <Realtime/> */} {/* Component not found */}
+          <LanguageSwitcher />
           <IconButton
             size="large"
             edge="end"
@@ -175,13 +218,13 @@ const Layout = ({ children }) => {
           <ListItemIcon>
             <AccountCircle fontSize="small" />
           </ListItemIcon>
-          Profile
+          {t('common.profile')}
         </MenuItem>
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <Logout fontSize="small" />
           </ListItemIcon>
-          Logout
+          {t('common.logout')}
         </MenuItem>
       </Menu>
       <Box

@@ -4,10 +4,17 @@ require('dotenv').config();
 // MySQL-only configuration (no SQLite fallback)
 console.log('📝 Configuring MySQL database connection');
 
+// Require database credentials to be set
+if (!process.env.DB_NAME || !process.env.DB_USER || !process.env.DB_PASSWORD) {
+  console.error('❌ Database credentials must be set in environment variables');
+  console.error('   Required: DB_NAME, DB_USER, DB_PASSWORD');
+  throw new Error('Database configuration is incomplete');
+}
+
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'inventory_db',
-  process.env.DB_USER || 'root',
-  process.env.DB_PASSWORD || 'root',
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST || 'localhost',
     dialect: 'mysql',

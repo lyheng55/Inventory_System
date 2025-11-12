@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
 
 const AuthContext = createContext();
@@ -14,31 +14,48 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      fetchUserProfile();
-    } else {
-      // Set loading to false immediately if no token
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       const response = await axios.get('/auth/profile');
       setUser(response.data.user);
+      setIsInitialized(true);
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
-      localStorage.removeItem('token');
-      delete axios.defaults.headers.common['Authorization'];
-      // Don't set user to null here, let it remain null
+      // Only remove token if it's a 401 (unauthorized) error
+      // This means the token is invalid or expired
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+        setUser(null);
+      } else {
+        // For other errors, keep the user logged in if they exist
+        console.warn('Profile fetch failed but keeping user logged in:', error.message);
+      }
     } finally {
       setLoading(false);
+      setIsInitialized(true);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token && !isInitialized && !user) {
+      // Only fetch profile on initial load if we have a token but no user
+      // This prevents fetching after successful login
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchUserProfile();
+    } else if (!token) {
+      // Set loading to false immediately if no token
+      setLoading(false);
+      setIsInitialized(true);
+    } else if (user && !isInitialized) {
+      // User is already set (from login), just mark as initialized
+      setLoading(false);
+      setIsInitialized(true);
+    }
+  }, [isInitialized, user, fetchUserProfile]);
 
   const login = async (username, password) => {
     try {
@@ -48,6 +65,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
+      setIsInitialized(true);
+      setLoading(false);
       
       return { success: true };
     } catch (error) {
@@ -66,6 +85,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
+      setIsInitialized(true);
+      setLoading(false);
       
       return { success: true };
     } catch (error) {
@@ -76,10 +97,33 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
-    setUser(null);
+  const logout = async () => {
+    try {
+      // Call server logout endpoint to log the action
+      await axios.post('/auth/logout');
+    } catch (error) {
+      // Even if server call fails, proceed with local logout
+      // This ensures user can always log out
+      console.warn('Logout endpoint call failed, proceeding with local logout:', error);
+    } finally {
+      // Always clear local state regardless of server response
+      // Clear all possible storage keys (both patterns used in the app)
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      
+      // Clear axios authorization header
+      delete axios.defaults.headers.common['Authorization'];
+      
+      // Reset all state
+      setUser(null);
+      setIsInitialized(false);
+      setLoading(false);
+      
+      // Navigate to clean login page (reset URL to root)
+      window.location.href = '/';
+    }
   };
 
   const updateProfile = async (profileData) => {

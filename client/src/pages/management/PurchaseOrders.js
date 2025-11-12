@@ -56,10 +56,12 @@ import {
   useMutation,
   useQueryClient
 } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import axios from '../../utils/axios';
 import FileUpload from '../../components/forms/FileUpload';
 
 const PurchaseOrders = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -136,7 +138,7 @@ const PurchaseOrders = () => {
         queryClient.invalidateQueries('purchaseOrders');
         setOpenDialog(false);
         resetForm();
-        alert('Purchase order created successfully!');
+        alert(t('purchaseOrders.orderCreatedSuccess'));
       },
       onError: (error) => {
         console.error('Create order error:', error);
@@ -263,12 +265,12 @@ const PurchaseOrders = () => {
     
     // Validate form data
     if (!formData.supplierId || !formData.warehouseId) {
-      alert('Please select a supplier and warehouse');
+      alert(t('purchaseOrders.selectSupplierWarehouse'));
       return;
     }
     
     if (formData.items.length === 0) {
-      alert('Please add at least one item to the order');
+      alert(t('purchaseOrders.addAtLeastOneItem'));
       return;
     }
     
@@ -327,7 +329,7 @@ const PurchaseOrders = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <Typography>Loading purchase orders...</Typography>
+        <Typography>{t('purchaseOrders.loadingPurchaseOrders')}</Typography>
       </Box>
     );
   }
@@ -336,14 +338,14 @@ const PurchaseOrders = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Purchase Orders
+          {t('purchaseOrders.title')}
         </Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => handleOpenDialog()}
         >
-          Create Order
+          {t('purchaseOrders.createOrder')}
         </Button>
       </Box>
 
@@ -354,7 +356,7 @@ const PurchaseOrders = () => {
             <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
-                label="Search orders"
+                label={t('purchaseOrders.searchOrders')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 InputProps={{
@@ -368,31 +370,31 @@ const PurchaseOrders = () => {
             </Grid>
             <Grid item xs={12} md={2}>
               <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
+                <InputLabel>{t('common.status')}</InputLabel>
                 <Select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  label="Status"
+                  label={t('common.status')}
                 >
-                  <MenuItem value="">All Status</MenuItem>
-                  <MenuItem value="draft">Draft</MenuItem>
-                  <MenuItem value="pending">Pending</MenuItem>
-                  <MenuItem value="approved">Approved</MenuItem>
-                  <MenuItem value="ordered">Ordered</MenuItem>
-                  <MenuItem value="received">Received</MenuItem>
-                  <MenuItem value="cancelled">Cancelled</MenuItem>
+                  <MenuItem value="">{t('purchaseOrders.allStatus')}</MenuItem>
+                  <MenuItem value="draft">{t('purchaseOrders.draft')}</MenuItem>
+                  <MenuItem value="pending">{t('purchaseOrders.pending')}</MenuItem>
+                  <MenuItem value="approved">{t('purchaseOrders.approved')}</MenuItem>
+                  <MenuItem value="ordered">{t('purchaseOrders.ordered')}</MenuItem>
+                  <MenuItem value="received">{t('purchaseOrders.received')}</MenuItem>
+                  <MenuItem value="cancelled">{t('purchaseOrders.cancelled')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={2}>
               <FormControl fullWidth>
-                <InputLabel>Supplier</InputLabel>
+                <InputLabel>{t('purchaseOrders.supplier')}</InputLabel>
                 <Select
                   value={supplierFilter}
                   onChange={(e) => setSupplierFilter(e.target.value)}
-                  label="Supplier"
+                  label={t('purchaseOrders.supplier')}
                 >
-                  <MenuItem value="">All Suppliers</MenuItem>
+                  <MenuItem value="">{t('purchaseOrders.allSuppliers')}</MenuItem>
                   {suppliers?.map((supplier) => (
                     <MenuItem key={supplier.id} value={supplier.id}>
                       {supplier.name}
@@ -403,13 +405,13 @@ const PurchaseOrders = () => {
             </Grid>
             <Grid item xs={12} md={2}>
               <FormControl fullWidth>
-                <InputLabel>Warehouse</InputLabel>
+                <InputLabel>{t('purchaseOrders.warehouse')}</InputLabel>
                 <Select
                   value={warehouseFilter}
                   onChange={(e) => setWarehouseFilter(e.target.value)}
-                  label="Warehouse"
+                  label={t('purchaseOrders.warehouse')}
                 >
-                  <MenuItem value="">All Warehouses</MenuItem>
+                  <MenuItem value="">{t('purchaseOrders.allWarehouses')}</MenuItem>
                   {warehouses?.map((warehouse) => (
                     <MenuItem key={warehouse.id} value={warehouse.id}>
                       {warehouse.name}
@@ -428,14 +430,14 @@ const PurchaseOrders = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Order Number</TableCell>
-                <TableCell>Supplier</TableCell>
-                <TableCell>Warehouse</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Total Amount</TableCell>
-                <TableCell>Order Date</TableCell>
-                <TableCell>Expected Delivery</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>{t('purchaseOrders.orderNumber')}</TableCell>
+                <TableCell>{t('purchaseOrders.supplier')}</TableCell>
+                <TableCell>{t('purchaseOrders.warehouse')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('purchaseOrders.totalAmount')}</TableCell>
+                <TableCell>{t('purchaseOrders.orderDate')}</TableCell>
+                <TableCell>{t('purchaseOrders.expectedDelivery')}</TableCell>
+                <TableCell>{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -461,7 +463,7 @@ const PurchaseOrders = () => {
                   <TableCell>
                     {order.expectedDeliveryDate ? 
                       new Date(order.expectedDeliveryDate).toLocaleDateString() : 
-                      'N/A'
+                      t('purchaseOrders.notSpecified')
                     }
                   </TableCell>
                   <TableCell>
@@ -518,19 +520,19 @@ const PurchaseOrders = () => {
       {/* Create/Edit Order Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="lg" fullWidth>
         <DialogTitle>
-          {editingOrder ? 'Edit Purchase Order' : 'Create New Purchase Order'}
+          {editingOrder ? t('purchaseOrders.editOrder') : t('purchaseOrders.createOrder')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
               <Step>
-                <StepLabel>Order Details</StepLabel>
+                <StepLabel>{t('purchaseOrders.orderDetails')}</StepLabel>
               </Step>
               <Step>
-                <StepLabel>Add Items</StepLabel>
+                <StepLabel>{t('purchaseOrders.addItems')}</StepLabel>
               </Step>
               <Step>
-                <StepLabel>Review & Submit</StepLabel>
+                <StepLabel>{t('purchaseOrders.reviewSubmit')}</StepLabel>
               </Step>
             </Stepper>
 
@@ -538,11 +540,11 @@ const PurchaseOrders = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth required>
-                    <InputLabel>Supplier</InputLabel>
+                    <InputLabel>{t('purchaseOrders.supplier')}</InputLabel>
                     <Select
                       value={formData.supplierId}
                       onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
-                      label="Supplier"
+                      label={t('purchaseOrders.supplier')}
                     >
                       {suppliers?.map((supplier) => (
                         <MenuItem key={supplier.id} value={supplier.id}>
@@ -554,11 +556,11 @@ const PurchaseOrders = () => {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth required>
-                    <InputLabel>Warehouse</InputLabel>
+                    <InputLabel>{t('purchaseOrders.warehouse')}</InputLabel>
                     <Select
                       value={formData.warehouseId}
                       onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                      label="Warehouse"
+                      label={t('purchaseOrders.warehouse')}
                     >
                       {warehouses?.map((warehouse) => (
                         <MenuItem key={warehouse.id} value={warehouse.id}>
@@ -571,7 +573,7 @@ const PurchaseOrders = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Expected Delivery Date"
+                    label={t('purchaseOrders.expectedDeliveryDate')}
                     type="date"
                     value={formData.expectedDeliveryDate}
                     onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })}
@@ -581,7 +583,7 @@ const PurchaseOrders = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Notes"
+                    label={t('purchaseOrders.notes')}
                     multiline
                     rows={3}
                     value={formData.notes}
@@ -590,7 +592,7 @@ const PurchaseOrders = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <Typography variant="subtitle2" gutterBottom>
-                    Attach Documents (Optional)
+                    {t('purchaseOrders.attachDocuments')}
                   </Typography>
                   <FileUpload
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
@@ -617,16 +619,16 @@ const PurchaseOrders = () => {
             {activeStep === 1 && (
               <Box>
                 <Typography variant="h6" gutterBottom>
-                  Add Items to Order
+                  {t('purchaseOrders.addItemsToOrder')}
                 </Typography>
                 <Grid container spacing={2} sx={{ mb: 2 }}>
                   <Grid item xs={12} sm={4}>
                     <FormControl fullWidth>
-                      <InputLabel>Product</InputLabel>
+                      <InputLabel>{t('purchaseOrders.product')}</InputLabel>
                       <Select
                         value={newItem.productId}
                         onChange={(e) => setNewItem({ ...newItem, productId: e.target.value })}
-                        label="Product"
+                        label={t('purchaseOrders.product')}
                       >
                         {products?.map((product) => (
                           <MenuItem key={product.id} value={product.id}>
@@ -639,7 +641,7 @@ const PurchaseOrders = () => {
                   <Grid item xs={12} sm={2}>
                     <TextField
                       fullWidth
-                      label="Quantity"
+                      label={t('purchaseOrders.quantity')}
                       type="number"
                       value={newItem.quantity}
                       onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
@@ -648,7 +650,7 @@ const PurchaseOrders = () => {
                   <Grid item xs={12} sm={2}>
                     <TextField
                       fullWidth
-                      label="Unit Price"
+                      label={t('purchaseOrders.unitPrice')}
                       type="number"
                       step="0.01"
                       value={newItem.unitPrice}
@@ -658,7 +660,7 @@ const PurchaseOrders = () => {
                   <Grid item xs={12} sm={2}>
                     <TextField
                       fullWidth
-                      label="Expiry Date"
+                      label={t('purchaseOrders.expiryDate')}
                       type="date"
                       value={newItem.expiryDate}
                       onChange={(e) => setNewItem({ ...newItem, expiryDate: e.target.value })}
@@ -673,7 +675,7 @@ const PurchaseOrders = () => {
                       onClick={handleAddItem}
                       sx={{ height: '56px' }}
                     >
-                      Add Item
+                      {t('purchaseOrders.addItem')}
                     </Button>
                   </Grid>
                 </Grid>
@@ -683,11 +685,11 @@ const PurchaseOrders = () => {
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Product</TableCell>
-                          <TableCell>Quantity</TableCell>
-                          <TableCell>Unit Price</TableCell>
-                          <TableCell>Total</TableCell>
-                          <TableCell>Actions</TableCell>
+                          <TableCell>{t('purchaseOrders.product')}</TableCell>
+                          <TableCell>{t('purchaseOrders.quantity')}</TableCell>
+                          <TableCell>{t('purchaseOrders.unitPrice')}</TableCell>
+                          <TableCell>{t('purchaseOrders.total')}</TableCell>
+                          <TableCell>{t('common.actions')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -722,23 +724,23 @@ const PurchaseOrders = () => {
             {activeStep === 2 && (
               <Box>
                 <Typography variant="h6" gutterBottom>
-                  Review Order
+                  {t('purchaseOrders.reviewOrder')}
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Supplier:</Typography>
+                    <Typography variant="subtitle2">{t('purchaseOrders.supplier')}:</Typography>
                     <Typography>
                       {suppliers?.find(s => s.id === formData.supplierId)?.name}
                     </Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Warehouse:</Typography>
+                    <Typography variant="subtitle2">{t('purchaseOrders.warehouse')}:</Typography>
                     <Typography>
                       {warehouses?.find(w => w.id === formData.warehouseId)?.name}
                     </Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="subtitle2">Items ({formData.items.length}):</Typography>
+                    <Typography variant="subtitle2">{t('purchaseOrders.items')} ({formData.items.length}):</Typography>
                     <List dense>
                       {formData.items.map((item, index) => (
                         <ListItem key={index}>
@@ -753,7 +755,7 @@ const PurchaseOrders = () => {
                   <Grid item xs={12}>
                     <Divider />
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                      <Typography variant="h6">Total Amount:</Typography>
+                      <Typography variant="h6">{t('purchaseOrders.totalAmount')}:</Typography>
                       <Typography variant="h6">${calculateTotal().toFixed(2)}</Typography>
                     </Box>
                   </Grid>
@@ -762,10 +764,10 @@ const PurchaseOrders = () => {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
             {activeStep > 0 && (
               <Button onClick={() => setActiveStep(activeStep - 1)}>
-                <ArrowBack /> Back
+                <ArrowBack /> {t('common.back')}
               </Button>
             )}
             {activeStep < 2 ? (
@@ -774,11 +776,11 @@ const PurchaseOrders = () => {
                 onClick={() => setActiveStep(activeStep + 1)}
                 disabled={activeStep === 0 && (!formData.supplierId || !formData.warehouseId)}
               >
-                Next <ArrowForward />
+                {t('common.next')} <ArrowForward />
               </Button>
             ) : (
               <Button type="submit" variant="contained">
-                {editingOrder ? 'Update Order' : 'Create Order'}
+                {editingOrder ? t('purchaseOrders.editOrder') : t('purchaseOrders.createOrder')}
               </Button>
             )}
           </DialogActions>
@@ -790,19 +792,19 @@ const PurchaseOrders = () => {
         {viewingOrder && (
           <>
             <DialogTitle>
-              Purchase Order: {viewingOrder.orderNumber}
+              {t('purchaseOrders.title')}: {viewingOrder.orderNumber}
             </DialogTitle>
             <DialogContent>
               <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>
-                <Tab label="Order Details" />
-                <Tab label="Items" />
-                <Tab label="Actions" />
+                <Tab label={t('purchaseOrders.orderDetails')} />
+                <Tab label={t('purchaseOrders.items')} />
+                <Tab label={t('common.actions')} />
               </Tabs>
 
               {tabValue === 0 && (
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Status:</Typography>
+                    <Typography variant="subtitle2">{t('common.status')}:</Typography>
                     <Chip
                       label={viewingOrder.status}
                       color={getStatusColor(viewingOrder.status)}
@@ -810,33 +812,33 @@ const PurchaseOrders = () => {
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Total Amount:</Typography>
+                    <Typography variant="subtitle2">{t('purchaseOrders.totalAmount')}:</Typography>
                     <Typography variant="h6">${viewingOrder.finalAmount ? parseFloat(viewingOrder.finalAmount).toFixed(2) : '0.00'}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Supplier:</Typography>
+                    <Typography variant="subtitle2">{t('purchaseOrders.supplier')}:</Typography>
                     <Typography>{viewingOrder.Supplier?.name}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Warehouse:</Typography>
+                    <Typography variant="subtitle2">{t('purchaseOrders.warehouse')}:</Typography>
                     <Typography>{viewingOrder.Warehouse?.name}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Order Date:</Typography>
+                    <Typography variant="subtitle2">{t('purchaseOrders.orderDate')}:</Typography>
                     <Typography>{new Date(viewingOrder.orderDate).toLocaleDateString()}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2">Expected Delivery:</Typography>
+                    <Typography variant="subtitle2">{t('purchaseOrders.expectedDelivery')}:</Typography>
                     <Typography>
                       {viewingOrder.expectedDeliveryDate ? 
                         new Date(viewingOrder.expectedDeliveryDate).toLocaleDateString() : 
-                        'Not specified'
+                        t('purchaseOrders.notSpecified')
                       }
                     </Typography>
                   </Grid>
                   {viewingOrder.notes && (
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2">Notes:</Typography>
+                      <Typography variant="subtitle2">{t('purchaseOrders.notes')}:</Typography>
                       <Typography>{viewingOrder.notes}</Typography>
                     </Grid>
                   )}
@@ -848,11 +850,11 @@ const PurchaseOrders = () => {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Product</TableCell>
-                        <TableCell>Quantity</TableCell>
-                        <TableCell>Received</TableCell>
-                        <TableCell>Unit Price</TableCell>
-                        <TableCell>Total</TableCell>
+                        <TableCell>{t('purchaseOrders.product')}</TableCell>
+                        <TableCell>{t('purchaseOrders.quantity')}</TableCell>
+                        <TableCell>{t('purchaseOrders.received')}</TableCell>
+                        <TableCell>{t('purchaseOrders.unitPrice')}</TableCell>
+                        <TableCell>{t('purchaseOrders.total')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -884,7 +886,7 @@ const PurchaseOrders = () => {
               {tabValue === 2 && (
                 <Box>
                   <Typography variant="h6" gutterBottom>
-                    Available Actions
+                    {t('purchaseOrders.availableActions')}
                   </Typography>
                   <Grid container spacing={2}>
                     {viewingOrder.status === 'draft' && (
@@ -895,7 +897,7 @@ const PurchaseOrders = () => {
                           startIcon={<CheckCircle />}
                           onClick={() => approveOrderMutation.mutate(viewingOrder.id)}
                         >
-                          Approve Order
+                          {t('purchaseOrders.approveOrder')}
                         </Button>
                       </Grid>
                     )}
@@ -910,7 +912,7 @@ const PurchaseOrders = () => {
                             alert('Receipt processing would be implemented here');
                           }}
                         >
-                          Process Receipt
+                          {t('purchaseOrders.processReceipt')}
                         </Button>
                       </Grid>
                     )}
@@ -923,7 +925,7 @@ const PurchaseOrders = () => {
                           startIcon={<Cancel />}
                           onClick={() => cancelOrderMutation.mutate(viewingOrder.id)}
                         >
-                          Cancel Order
+                          {t('purchaseOrders.cancelOrder')}
                         </Button>
                       </Grid>
                     )}
@@ -932,7 +934,7 @@ const PurchaseOrders = () => {
               )}
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setViewingOrder(null)}>Close</Button>
+              <Button onClick={() => setViewingOrder(null)}>{t('common.close')}</Button>
             </DialogActions>
           </>
         )}

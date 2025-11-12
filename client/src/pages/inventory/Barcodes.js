@@ -40,11 +40,13 @@ import {
   useMutation,
   useQueryClient
 } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import axios from '../../utils/axios';
 import BarcodeScanner from '../../components/barcode/BarcodeScanner';
 import BarcodeGenerator from '../../components/barcode/BarcodeGenerator';
 
 const Barcodes = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,7 +125,8 @@ const Barcodes = () => {
 
   const handleProductFound = (product) => {
     setedProduct(product);
-    setScannerOpen(false);
+    // Don't close the dialog immediately - let user see the result
+    // User can close manually when ready
   };
 
   const handleGenerateBarcode = (product) => {
@@ -213,7 +216,7 @@ const Barcodes = () => {
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Barcode Management
+          {t('barcodes.barcodeManagement')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
@@ -221,14 +224,14 @@ const Barcodes = () => {
             startIcon={<QrCodeScanner />}
             onClick={() => setScannerOpen(true)}
           >
-            Scan Barcode
+            {t('barcodes.scanBarcode')}
           </Button>
           <Button
             variant="contained"
             startIcon={<QrCode />}
             onClick={() => setBulkGenerateOpen(true)}
           >
-            Bulk Generate
+            {t('barcodes.bulkGenerate')}
           </Button>
         </Box>
       </Box>
@@ -240,7 +243,7 @@ const Barcodes = () => {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Search products"
+                label={t('barcodes.searchProducts')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -268,7 +271,7 @@ const Barcodes = () => {
                   onClick={() => refetch()}
                   disabled={isLoading}
                 >
-                  Refresh
+                  {t('common.refresh')}
                 </Button>
               </Box>
             </Grid>
@@ -280,7 +283,7 @@ const Barcodes = () => {
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Products with Barcodes
+            {t('barcodes.productsWithBarcodes')}
           </Typography>
           
           {isLoading ? (
@@ -293,11 +296,11 @@ const Barcodes = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Product</TableCell>
-                      <TableCell>SKU</TableCell>
-                      <TableCell>Barcode</TableCell>
-                      <TableCell>Category</TableCell>
-                      <TableCell>Actions</TableCell>
+                      <TableCell>{t('barcodes.product')}</TableCell>
+                      <TableCell>{t('barcodes.sku')}</TableCell>
+                      <TableCell>{t('barcodes.barcode')}</TableCell>
+                      <TableCell>{t('barcodes.category')}</TableCell>
+                      <TableCell>{t('common.actions')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -321,7 +324,7 @@ const Barcodes = () => {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Tooltip title="Generate/View Barcode">
+                            <Tooltip title={t('barcodes.generateViewBarcode')}>
                               <IconButton
                                 size="small"
                                 onClick={() => handleGenerateBarcode(product)}
@@ -329,7 +332,7 @@ const Barcodes = () => {
                                 <QrCode />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Download Barcode">
+                            <Tooltip title={t('barcodes.downloadBarcode')}>
                               <IconButton
                                 size="small"
                                 onClick={() => downloadBarcode(product)}
@@ -337,7 +340,7 @@ const Barcodes = () => {
                                 <Download />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Print Barcode">
+                            <Tooltip title={t('barcodes.printBarcode')}>
                               <IconButton
                                 size="small"
                                 onClick={() => printBarcode(product)}
@@ -356,7 +359,7 @@ const Barcodes = () => {
               {productsData?.products?.length === 0 && (
                 <Box sx={{ textAlign: 'center', p: 3 }}>
                   <Typography variant="body1" color="text.secondary">
-                    No products with barcodes found
+                    {t('barcodes.noProductsFound')}
                   </Typography>
                 </Box>
               )}
@@ -382,7 +385,7 @@ const Barcodes = () => {
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
         onProductFound={handleProductFound}
-        title="Scan Product Barcode"
+        title={t('barcodes.scanProductBarcode')}
       />
 
       {/* Barcode Generator Dialog */}
@@ -396,11 +399,11 @@ const Barcodes = () => {
       {/* Bulk Generate Dialog */}
       <Dialog open={bulkGenerateOpen} onClose={() => setBulkGenerateOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>
-          Bulk Generate Barcodes
+          {t('barcodes.bulkGenerateBarcodes')}
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            This will generate barcodes for all products that don't have barcodes yet.
+            {t('barcodes.bulkGenerateDescription')}
           </Typography>
           
           {bulkResults && (
@@ -412,12 +415,12 @@ const Barcodes = () => {
           {bulkResults?.results && (
             <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
               <Typography variant="h6" gutterBottom>
-                Generation Results:
+                {t('barcodes.generationResults')}
               </Typography>
               {bulkResults.results.map((result, index) => (
                 <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Chip
-                    label={result.success ? 'Success' : 'Failed'}
+                    label={result.success ? t('barcodes.success') : t('barcodes.failed')}
                     color={result.success ? 'success' : 'error'}
                     size="small"
                     sx={{ mr: 2 }}
@@ -434,7 +437,7 @@ const Barcodes = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setBulkGenerateOpen(false)}>
-            Close
+            {t('common.close')}
           </Button>
           <Button
             variant="contained"
@@ -442,7 +445,7 @@ const Barcodes = () => {
             disabled={bulkGenerating}
             startIcon={bulkGenerating ? <CircularProgress size={20} /> : <QrCode />}
           >
-            {bulkGenerating ? 'Generating...' : 'Generate Barcodes'}
+            {bulkGenerating ? t('barcodes.generating') : t('barcodes.generateBarcodes')}
           </Button>
         </DialogActions>
       </Dialog>

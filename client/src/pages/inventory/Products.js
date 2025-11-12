@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -44,11 +44,13 @@ import {
   useMutation,
   useQueryClient
 } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import axios from '../../utils/axios';
 import FileUpload from '../../components/forms/FileUpload';
 import BarcodeGenerator from '../../components/barcode/BarcodeGenerator';
 
 const Products = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState(''); // Separate state for the input
@@ -74,6 +76,36 @@ const Products = () => {
   });
 
   const queryClient = useQueryClient();
+
+  // Generate unique SKU in format PROD-SKU-000001
+  const generateSKU = async () => {
+    try {
+      // Fetch all products to find the highest SKU number
+      // Use a large limit to get all products
+      const response = await axios.get('/products?limit=10000&page=1');
+      const products = response.data?.products || [];
+      
+      // Find the maximum SKU number
+      let maxNumber = 0;
+      products.forEach(product => {
+        if (product.sku && product.sku.startsWith('PROD-SKU-')) {
+          const numberPart = product.sku.replace('PROD-SKU-', '');
+          const number = parseInt(numberPart, 10);
+          if (!isNaN(number) && number > maxNumber) {
+            maxNumber = number;
+          }
+        }
+      });
+      
+      // Increment and format with leading zeros
+      const nextNumber = maxNumber + 1;
+      return `PROD-SKU-${nextNumber.toString().padStart(6, '0')}`;
+    } catch (error) {
+      console.error('Error generating SKU:', error);
+      // Fallback: start from 1 if API call fails
+      return `PROD-SKU-000001`;
+    }
+  };
 
   // Search function
   const handleSearch = () => {
@@ -121,6 +153,43 @@ const Products = () => {
       return response.data;
     }
   );
+
+  // Fetch units from database
+  const { data: unitsData } = useQuery(
+    'units',
+    async () => {
+      try {
+        const response = await axios.get('/units');
+        // The API returns an array of units
+        if (Array.isArray(response.data)) {
+          return response.data;
+        } else {
+          return [];
+        }
+      } catch (error) {
+        console.warn('Failed to fetch units from database:', error);
+        return [];
+      }
+    },
+    {
+      initialData: []
+    }
+  );
+
+  // Ensure units is always an array
+  const units = Array.isArray(unitsData) ? unitsData : [];
+
+  // Set default unit when units are loaded (only for new products)
+  useEffect(() => {
+    if (units.length > 0 && !editingProduct && !formData.unit) {
+      // Try to find 'pcs' first, otherwise use the first unit
+      const defaultUnit = units.find(u => u.name === 'pcs') || units[0];
+      if (defaultUnit) {
+        setFormData(prev => ({ ...prev, unit: defaultUnit.name }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [units.length, editingProduct]);
 
   const createProductMutation = useMutation(
     (productData) => axios.post('/products', productData),
@@ -170,7 +239,7 @@ const Products = () => {
     });
   };
 
-  const handleOpenDialog = (product = null) => {
+  const handleOpenDialog = async (product = null) => {
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -188,6 +257,12 @@ const Products = () => {
       });
     } else {
       resetForm();
+      // Auto-generate SKU for new products
+      const newSKU = await generateSKU();
+      setFormData(prev => ({
+        ...prev,
+        sku: newSKU
+      }));
     }
     setOpenDialog(true);
   };
@@ -217,7 +292,7 @@ const Products = () => {
   };
 
   const handleDelete = (product) => {
-    if (window.confirm(`Are you sure you want to delete ${product.name}?`)) {
+    if (window.confirm(t('products.confirmDelete', { name: product.name }))) {
       deleteProductMutation.mutate(product.id);
     }
   };
@@ -308,7 +383,7 @@ const Products = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <Typography>Loading products...</Typography>
+        <Typography>{t('common.loading')}</Typography>
       </Box>
     );
   }
@@ -317,14 +392,14 @@ const Products = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Products
+          {t('products.title')}
         </Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => handleOpenDialog()}
         >
-          Add Product
+          {t('products.addProduct')}
         </Button>
       </Box>
 
@@ -335,7 +410,7 @@ const Products = () => {
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                label="Search products"
+                label={t('products.searchProducts')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -367,13 +442,13 @@ const Products = () => {
             </Grid>
             <Grid item xs={12} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
+                <InputLabel>{t('products.category')}</InputLabel>
                 <Select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  label="Category"
+                  label={t('products.category')}
                 >
-                  <MenuItem value="">All Categories</MenuItem>
+                  <MenuItem value="">{t('common.all')} {t('products.category')}</MenuItem>
                   {categories?.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
                       {category.name}
@@ -389,7 +464,7 @@ const Products = () => {
                 onClick={() => setLowStockFilter(!lowStockFilter)}
                 fullWidth
               >
-                Low Stock Only
+                {t('products.lowStockFilter')}
               </Button>
             </Grid>
           </Grid>
@@ -402,14 +477,14 @@ const Products = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Image</TableCell>
-                <TableCell>SKU</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Price</TableCell>
-                <TableCell>Stock</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>{t('products.image')}</TableCell>
+                <TableCell>{t('products.sku')}</TableCell>
+                <TableCell>{t('common.name')}</TableCell>
+                <TableCell>{t('products.category')}</TableCell>
+                <TableCell>{t('products.price')}</TableCell>
+                <TableCell>{t('products.stock')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -473,7 +548,7 @@ const Products = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={product.isLowStock ? 'Low Stock' : 'In Stock'}
+                      label={product.isLowStock ? t('stock.lowStock') : t('stock.inStock')}
                       color={product.isLowStock ? 'warning' : 'success'}
                       size="small"
                     />
@@ -483,21 +558,21 @@ const Products = () => {
                       <IconButton 
                         size="small" 
                         onClick={() => handleOpenDialog(product)}
-                        title="Edit Product"
+                        title={t('products.editProduct')}
                       >
                         <Edit />
                       </IconButton>
                       <IconButton 
                         size="small" 
                         onClick={() => handleDelete(product)}
-                        title="Delete Product"
+                        title={t('common.delete')}
                       >
                         <Delete />
                       </IconButton>
                       <IconButton 
                         size="small" 
                         onClick={() => handleGenerateBarcode(product)}
-                        title="Generate Barcode"
+                        title={t('products.generateBarcode')}
                       >
                         <QrCode />
                       </IconButton>
@@ -506,14 +581,14 @@ const Products = () => {
                           <IconButton 
                             size="small" 
                             onClick={() => downloadBarcode(product)}
-                            title="Download Barcode"
+                            title={t('common.download')}
                           >
                             <Download />
                           </IconButton>
                           <IconButton 
                             size="small" 
                             onClick={() => printBarcode(product)}
-                            title="Print Barcode"
+                            title={t('common.print')}
                           >
                             <Print />
                           </IconButton>
@@ -543,7 +618,7 @@ const Products = () => {
       {/* Add/Edit Product Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingProduct ? 'Edit Product' : 'Add New Product'}
+          {editingProduct ? t('products.editProduct') : t('products.addProduct')}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
@@ -551,26 +626,41 @@ const Products = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="SKU"
+                  label={t('products.sku')}
                   name="sku"
                   value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                  disabled
                   required
+                  helperText={editingProduct ? t('products.skuReadOnly') : t('products.skuAutoGenerated')}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Unit"
-                  name="unit"
-                  value={formData.unit}
-                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                />
+                <FormControl fullWidth>
+                  <InputLabel>{t('products.unit')}</InputLabel>
+                  <Select
+                    value={formData.unit}
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                    label={t('products.unit')}
+                    disabled={units.length === 0}
+                  >
+                    {units.length === 0 ? (
+                      <MenuItem disabled value="">
+                        <em>Loading units...</em>
+                      </MenuItem>
+                    ) : (
+                      units.map((unit) => (
+                        <MenuItem key={unit.id} value={unit.name}>
+                          {unit.displayName || unit.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Product Name"
+                  label={t('products.productName')}
                   name="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -580,7 +670,7 @@ const Products = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Description"
+                  label={t('products.description')}
                   name="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -590,11 +680,11 @@ const Products = () => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
+                  <InputLabel>{t('products.category')}</InputLabel>
                   <Select
                     value={formData.categoryId}
                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                    label="Category"
+                    label={t('products.category')}
                   >
                     {categories?.map((category) => (
                       <MenuItem key={category.id} value={category.id}>
@@ -607,7 +697,7 @@ const Products = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Unit Price"
+                  label={t('products.unitPrice')}
                   name="unitPrice"
                   type="number"
                   value={formData.unitPrice}
@@ -618,7 +708,7 @@ const Products = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Cost Price"
+                  label={t('products.costPrice')}
                   name="costPrice"
                   type="number"
                   value={formData.costPrice}
@@ -629,7 +719,7 @@ const Products = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Reorder Point"
+                  label={t('products.reorderPoint')}
                   name="reorderPoint"
                   type="number"
                   value={formData.reorderPoint}
@@ -639,7 +729,7 @@ const Products = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Min Stock Level"
+                  label={t('products.minStockLevel')}
                   name="minStockLevel"
                   type="number"
                   value={formData.minStockLevel}
@@ -649,7 +739,7 @@ const Products = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Max Stock Level"
+                  label={t('products.maxStockLevel')}
                   name="maxStockLevel"
                   type="number"
                   value={formData.maxStockLevel}
@@ -658,7 +748,7 @@ const Products = () => {
               </Grid>
               <Grid item xs={12}>
                 <Typography variant="subtitle2" gutterBottom>
-                  Product Image
+                  {t('products.image')}
                 </Typography>
                 <FileUpload
                   accept="image/*"
@@ -667,9 +757,13 @@ const Products = () => {
                   uploadType="productImage"
                   referenceId={editingProduct?.id}
                   onUpload={(data) => {
-                    if (data.product) {
+                    // Handle both cases: with productId (update) and without (new product)
+                    if (data.imagePath) {
                       setFormData({ ...formData, image: data.imagePath });
-                      queryClient.invalidateQueries('products');
+                      if (data.product) {
+                        // Product was updated, invalidate queries
+                        queryClient.invalidateQueries('products');
+                      }
                     }
                   }}
                   onError={(error) => setUploadError(error)}
@@ -688,9 +782,9 @@ const Products = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained">
-              {editingProduct ? 'Update' : 'Create'}
+              {editingProduct ? t('common.update') : t('common.create')}
             </Button>
           </DialogActions>
         </form>

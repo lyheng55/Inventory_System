@@ -44,8 +44,10 @@ import {
 } from '@mui/icons-material';
 import {useQuery} from 'react-query';
 import axios from '../../utils/axios';
+import { useTranslation } from 'react-i18next';
 
 const Reports = () => {
+  const { t } = useTranslation();
   const [selectedReport, setSelectedReport] = useState('stock');
   // const [tabValue, setValue] = useState(0);
   const [dateRange, set] = useState({
@@ -63,12 +65,12 @@ const Reports = () => {
   const [exportDialog, setExportDialog] = useState(false);
 
   const reportTypes = [
-    { id: 'stock', name: 'Stock Levels', icon: <Inventory />, color: 'primary' },
-    { id: 'movements', name: 'Stock Movements', icon: <TrendingUp />, color: 'success' },
-    { id: 'low-stock', name: 'Low Stock Alerts', icon: <Warning />, color: 'warning' },
-    { id: 'inventory-value', name: 'Inventory Valuation', icon: <Assessment />, color: 'info' },
-    { id: 'purchase-orders', name: 'Purchase Orders', icon: <LocalShipping />, color: 'secondary' },
-    { id: 'suppliers', name: 'Supplier Performance', icon: <People />, color: 'error' }
+    { id: 'stock', name: t('reports.stockLevels'), icon: <Inventory />, color: 'primary' },
+    { id: 'movements', name: t('reports.stockMovements'), icon: <TrendingUp />, color: 'success' },
+    { id: 'low-stock', name: t('reports.lowStockAlertsTitle'), icon: <Warning />, color: 'warning' },
+    { id: 'inventory-value', name: t('reports.inventoryValuation'), icon: <Assessment />, color: 'info' },
+    { id: 'purchase-orders', name: t('reports.purchaseOrders'), icon: <LocalShipping />, color: 'secondary' },
+    { id: 'suppliers', name: t('reports.supplierPerformance'), icon: <People />, color: 'error' }
   ];
 
   // Fetch data based on selected report
@@ -146,7 +148,7 @@ const Reports = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Export failed');
+        throw new Error(t('reports.exportFailed'));
       }
 
       // Get the blob and create object URL
@@ -165,7 +167,7 @@ const Reports = () => {
       setExportDialog(false);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Export failed. Please try again.');
+      alert(t('reports.exportFailed'));
     }
   };
 
@@ -178,7 +180,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Products</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalProducts')}</Typography>
                 <Typography variant="h4">{reportData.summary?.totalProducts || 0}</Typography>
               </CardContent>
             </Card>
@@ -186,7 +188,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Quantity</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalQuantity')}</Typography>
                 <Typography variant="h4">{reportData.summary?.totalQuantity || 0}</Typography>
               </CardContent>
             </Card>
@@ -194,7 +196,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Value</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalValue')}</Typography>
                 <Typography variant="h4">${parseFloat(reportData.summary?.totalValue || 0).toFixed(2)}</Typography>
               </CardContent>
             </Card>
@@ -202,7 +204,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Low Stock Items</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.lowStockItems')}</Typography>
                 <Typography variant="h4" color="warning.main">{reportData.summary?.lowStockCount || 0}</Typography>
               </CardContent>
             </Card>
@@ -213,13 +215,13 @@ const Reports = () => {
           <le>
             <leHead>
               <leRow>
-                <leCell>Product</leCell>
-                <leCell>Category</leCell>
-                <leCell>Warehouse</leCell>
-                <leCell>Quantity</leCell>
-                <leCell>Reorder Point</leCell>
-                <leCell>Value</leCell>
-                <leCell>Status</leCell>
+                <leCell>{t('reports.product')}</leCell>
+                <leCell>{t('reports.category')}</leCell>
+                <leCell>{t('reports.warehouse')}</leCell>
+                <leCell>{t('reports.quantity')}</leCell>
+                <leCell>{t('reports.reorderPoint')}</leCell>
+                <leCell>{t('reports.value')}</leCell>
+                <leCell>{t('common.status')}</leCell>
               </leRow>
             </leHead>
             <leBody>
@@ -236,7 +238,7 @@ const Reports = () => {
                   <leCell>${stock.totalValue?.toFixed(2)}</leCell>
                   <leCell>
                     <Chip
-                      label={stock.isLowStock ? 'Low Stock' : 'In Stock'}
+                      label={stock.isLowStock ? t('reports.lowStock') : t('reports.inStock')}
                       color={stock.isLowStock ? 'warning' : 'success'}
                       size="small"
                     />
@@ -259,7 +261,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Movements</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalMovements')}</Typography>
                 <Typography variant="h4">{reportData.summary?.totalMovements || 0}</Typography>
               </CardContent>
             </Card>
@@ -267,7 +269,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Stock In</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.stockIn')}</Typography>
                 <Typography variant="h4" color="success.main">{reportData.summary?.totalInQuantity || 0}</Typography>
               </CardContent>
             </Card>
@@ -275,7 +277,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Stock Out</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.stockOut')}</Typography>
                 <Typography variant="h4" color="error.main">{reportData.summary?.totalOutQuantity || 0}</Typography>
               </CardContent>
             </Card>
@@ -283,7 +285,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Net Change</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.netChange')}</Typography>
                 <Typography variant="h4" color={reportData.summary?.netQuantity >= 0 ? 'success.main' : 'error.main'}>
                   {reportData.summary?.netQuantity || 0}
                 </Typography>
@@ -296,13 +298,13 @@ const Reports = () => {
           <le>
             <leHead>
               <leRow>
-                <leCell>Date</leCell>
-                <leCell>Product</leCell>
-                <leCell>Warehouse</leCell>
-                <leCell>Type</leCell>
-                <leCell>Quantity</leCell>
-                <leCell>Reason</leCell>
-                <leCell>Performed By</leCell>
+                <leCell>{t('common.date')}</leCell>
+                <leCell>{t('reports.product')}</leCell>
+                <leCell>{t('reports.warehouse')}</leCell>
+                <leCell>{t('reports.type')}</leCell>
+                <leCell>{t('reports.quantity')}</leCell>
+                <leCell>{t('reports.reason')}</leCell>
+                <leCell>{t('reports.performedBy')}</leCell>
               </leRow>
             </leHead>
             <leBody>
@@ -342,7 +344,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Alerts</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalAlerts')}</Typography>
                 <Typography variant="h4">{reportData.summary?.totalAlerts || 0}</Typography>
               </CardContent>
             </Card>
@@ -350,7 +352,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Critical Alerts</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.criticalAlerts')}</Typography>
                 <Typography variant="h4" color="error.main">{reportData.summary?.criticalAlerts || 0}</Typography>
               </CardContent>
             </Card>
@@ -358,7 +360,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Estimated Cost</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.estimatedCost')}</Typography>
                 <Typography variant="h4">${reportData.summary?.totalEstimatedCost?.toFixed(2) || '0.00'}</Typography>
               </CardContent>
             </Card>
@@ -366,7 +368,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Avg Days to Reorder</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.avgDaysToReorder')}</Typography>
                 <Typography variant="h4">{Math.round(reportData.summary?.averageDaysUntilReorder || 0)}</Typography>
               </CardContent>
             </Card>
@@ -377,14 +379,14 @@ const Reports = () => {
           <le>
             <leHead>
               <leRow>
-                <leCell>Product</leCell>
-                <leCell>Category</leCell>
-                <leCell>Warehouse</leCell>
-                <leCell>Current Stock</leCell>
-                <leCell>Reorder Point</leCell>
-                <leCell>Suggested Order</leCell>
-                <leCell>Estimated Cost</leCell>
-                <leCell>Priority</leCell>
+                <leCell>{t('reports.product')}</leCell>
+                <leCell>{t('reports.category')}</leCell>
+                <leCell>{t('reports.warehouse')}</leCell>
+                <leCell>{t('reports.currentStock')}</leCell>
+                <leCell>{t('reports.reorderPoint')}</leCell>
+                <leCell>{t('reports.suggestedOrder')}</leCell>
+                <leCell>{t('reports.estimatedCostLabel')}</leCell>
+                <leCell>{t('reports.priority')}</leCell>
               </leRow>
             </leHead>
             <leBody>
@@ -402,7 +404,7 @@ const Reports = () => {
                   <leCell>${alert.estimatedCost?.toFixed(2)}</leCell>
                   <leCell>
                     <Chip
-                      label={alert.isCritical ? 'Critical' : 'Low Stock'}
+                      label={alert.isCritical ? t('reports.critical') : t('reports.lowStock')}
                       color={alert.isCritical ? 'error' : 'warning'}
                       size="small"
                     />
@@ -425,7 +427,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Products</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalProducts')}</Typography>
                 <Typography variant="h4">{reportData.summary?.totalProducts || 0}</Typography>
               </CardContent>
             </Card>
@@ -433,7 +435,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Cost Value</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.costValue')}</Typography>
                 <Typography variant="h4">${reportData.summary?.totalCostValue?.toFixed(2) || '0.00'}</Typography>
               </CardContent>
             </Card>
@@ -441,7 +443,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Retail Value</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.retailValue')}</Typography>
                 <Typography variant="h4">${reportData.summary?.totalRetailValue?.toFixed(2) || '0.00'}</Typography>
               </CardContent>
             </Card>
@@ -449,7 +451,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Profit Margin</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.profitMargin')}</Typography>
                 <Typography variant="h4">{reportData.summary?.averageProfitMargin?.toFixed(1) || '0.0'}%</Typography>
               </CardContent>
             </Card>
@@ -460,13 +462,13 @@ const Reports = () => {
           <le>
             <leHead>
               <leRow>
-                <leCell>Product</leCell>
-                <leCell>Category</leCell>
-                <leCell>Warehouse</leCell>
-                <leCell>Quantity</leCell>
-                <leCell>Cost Value</leCell>
-                <leCell>Retail Value</leCell>
-                <leCell>Profit Margin</leCell>
+                <leCell>{t('reports.product')}</leCell>
+                <leCell>{t('reports.category')}</leCell>
+                <leCell>{t('reports.warehouse')}</leCell>
+                <leCell>{t('reports.quantity')}</leCell>
+                <leCell>{t('reports.costValue')}</leCell>
+                <leCell>{t('reports.retailValue')}</leCell>
+                <leCell>{t('reports.profitMargin')}</leCell>
               </leRow>
             </leHead>
             <leBody>
@@ -506,7 +508,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Orders</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalOrders')}</Typography>
                 <Typography variant="h4">{reportData.summary?.totalOrders || 0}</Typography>
               </CardContent>
             </Card>
@@ -514,7 +516,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Value</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalValue')}</Typography>
                 <Typography variant="h4">${parseFloat(reportData.summary?.totalValue || 0).toFixed(2)}</Typography>
               </CardContent>
             </Card>
@@ -522,7 +524,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Avg Order Value</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.avgOrderValue')}</Typography>
                 <Typography variant="h4">${parseFloat(reportData.summary?.averageOrderValue || 0).toFixed(2)}</Typography>
               </CardContent>
             </Card>
@@ -530,7 +532,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Delivery Performance</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.deliveryPerformance')}</Typography>
                 <Typography variant="h4">{reportData.summary?.deliveryPerformance?.toFixed(1) || '0.0'}%</Typography>
               </CardContent>
             </Card>
@@ -541,13 +543,13 @@ const Reports = () => {
           <le>
             <leHead>
               <leRow>
-                <leCell>Order Number</leCell>
-                <leCell>Supplier</leCell>
-                <leCell>Warehouse</leCell>
-                <leCell>Status</leCell>
-                <leCell>Order Date</leCell>
-                <leCell>Expected Delivery</leCell>
-                <leCell>Total Amount</leCell>
+                <leCell>{t('purchaseOrders.orderNumber')}</leCell>
+                <leCell>{t('common.supplier')}</leCell>
+                <leCell>{t('reports.warehouse')}</leCell>
+                <leCell>{t('common.status')}</leCell>
+                <leCell>{t('purchaseOrders.orderDate')}</leCell>
+                <leCell>{t('purchaseOrders.expectedDelivery')}</leCell>
+                <leCell>{t('common.totalAmount')}</leCell>
               </leRow>
             </leHead>
             <leBody>
@@ -567,7 +569,7 @@ const Reports = () => {
                   <leCell>
                     {order.expectedDeliveryDate ? 
                       new Date(order.expectedDeliveryDate).toLocaleDateString() : 
-                      'N/A'
+                      t('common.nA')
                     }
                   </leCell>
                   <leCell>${parseFloat(order.finalAmount || 0).toFixed(2)}</leCell>
@@ -589,7 +591,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Suppliers</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalSuppliers')}</Typography>
                 <Typography variant="h4">{reportData.summary?.totalSuppliers || 0}</Typography>
               </CardContent>
             </Card>
@@ -597,7 +599,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Active Suppliers</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.activeSuppliers')}</Typography>
                 <Typography variant="h4">{reportData.summary?.activeSuppliers || 0}</Typography>
               </CardContent>
             </Card>
@@ -605,7 +607,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Avg Delivery Performance</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.avgDeliveryPerformance')}</Typography>
                 <Typography variant="h4">{reportData.summary?.averageDeliveryPerformance?.toFixed(1) || '0.0'}%</Typography>
               </CardContent>
             </Card>
@@ -613,7 +615,7 @@ const Reports = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
-                <Typography color="text.secondary" gutterBottom>Total Value</Typography>
+                <Typography color="text.secondary" gutterBottom>{t('reports.totalValue')}</Typography>
                 <Typography variant="h4">${parseFloat(reportData.summary?.totalSupplierValue || 0).toFixed(2)}</Typography>
               </CardContent>
             </Card>
@@ -624,13 +626,13 @@ const Reports = () => {
           <le>
             <leHead>
               <leRow>
-                <leCell>Supplier</leCell>
-                <leCell>Contact</leCell>
-                <leCell>Rating</leCell>
-                <leCell>Total Orders</leCell>
-                <leCell>Total Value</leCell>
-                <leCell>Delivery Performance</leCell>
-                <leCell>Avg Delivery Time</leCell>
+                <leCell>{t('common.supplier')}</leCell>
+                <leCell>{t('reports.contact')}</leCell>
+                <leCell>{t('reports.rating')}</leCell>
+                <leCell>{t('reports.totalOrdersLabel')}</leCell>
+                <leCell>{t('reports.totalValueLabel')}</leCell>
+                <leCell>{t('reports.deliveryPerformance')}</leCell>
+                <leCell>{t('reports.avgDeliveryTime')}</leCell>
               </leRow>
             </leHead>
             <leBody>
@@ -663,7 +665,7 @@ const Reports = () => {
                       size="small"
                     />
                   </leCell>
-                  <leCell>{supplier.averageDeliveryTime?.toFixed(1) || 'N/A'} days</leCell>
+                  <leCell>{supplier.averageDeliveryTime?.toFixed(1) || t('common.nA')} {t('common.days')}</leCell>
                 </leRow>
               ))}
             </leBody>
@@ -677,9 +679,9 @@ const Reports = () => {
     if (error) {
       return (
         <Alert severity="error" sx={{ mb: 2 }}>
-          Error loading report: {error.message}
+          {t('reports.errorLoadingReport')}: {error.message}
           <Button onClick={() => refetch()} sx={{ ml: 2 }}>
-            Retry
+            {t('reports.retry')}
           </Button>
         </Alert>
       );
@@ -707,7 +709,7 @@ const Reports = () => {
       case 'suppliers':
         return renderSuppliersReport();
       default:
-        return <Typography>Select a report to view data</Typography>;
+        return <Typography>{t('reports.selectReportToView')}</Typography>;
     }
   };
 
@@ -715,7 +717,7 @@ const Reports = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Reports & Analytics
+          {t('reports.reportsAnalytics')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -723,21 +725,21 @@ const Reports = () => {
             startIcon={<Refresh />}
             onClick={() => refetch()}
           >
-            Refresh
+            {t('common.refresh')}
           </Button>
           <Button
             variant="outlined"
             startIcon={<Download />}
             onClick={handleExport}
           >
-            Export
+            {t('reports.exportReport')}
           </Button>
           <Button
             variant="outlined"
             startIcon={<Print />}
             onClick={() => window.print()}
           >
-            Print
+            {t('common.print')}
           </Button>
         </Box>
       </Box>
@@ -746,7 +748,7 @@ const Reports = () => {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Select Report Type
+            {t('reports.selectReportType')}
           </Typography>
           <Grid container spacing={2}>
             {reportTypes.map((report) => (
@@ -779,13 +781,13 @@ const Reports = () => {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Filters & Date Range
+            {t('reports.filtersDateRange')}
           </Typography>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={6} md={2}>
               <TextField
                 fullWidth
-                label="Start Date"
+                label={t('reports.startDate')}
                 type="date"
                 value={dateRange.startDate}
                 onChange={(e) => handleChange('startDate', e.target.value)}
@@ -795,7 +797,7 @@ const Reports = () => {
             <Grid item xs={12} sm={6} md={2}>
               <TextField
                 fullWidth
-                label="End Date"
+                label={t('reports.endDate')}
                 type="date"
                 value={dateRange.endDate}
                 onChange={(e) => handleChange('endDate', e.target.value)}
@@ -805,13 +807,13 @@ const Reports = () => {
             {warehouses && (
               <Grid item xs={12} sm={6} md={2}>
                 <FormControl fullWidth>
-                  <InputLabel>Warehouse</InputLabel>
+                  <InputLabel>{t('common.warehouse')}</InputLabel>
                   <Select
                     value={filters.warehouseId}
                     onChange={(e) => handleFilterChange('warehouseId', e.target.value)}
-                    label="Warehouse"
+                    label={t('common.warehouse')}
                   >
-                    <MenuItem value="">All Warehouses</MenuItem>
+                    <MenuItem value="">{t('reports.allWarehouses')}</MenuItem>
                     {warehouses.map((warehouse) => (
                       <MenuItem key={warehouse.id} value={warehouse.id}>
                         {warehouse.name}
@@ -824,13 +826,13 @@ const Reports = () => {
             {categories && (
               <Grid item xs={12} sm={6} md={2}>
                 <FormControl fullWidth>
-                  <InputLabel>Category</InputLabel>
+                  <InputLabel>{t('common.category')}</InputLabel>
                   <Select
                     value={filters.categoryId}
                     onChange={(e) => handleFilterChange('categoryId', e.target.value)}
-                    label="Category"
+                    label={t('common.category')}
                   >
-                    <MenuItem value="">All Categories</MenuItem>
+                    <MenuItem value="">{t('reports.allCategories')}</MenuItem>
                     {categories.map((category) => (
                       <MenuItem key={category.id} value={category.id}>
                         {category.name}
@@ -843,13 +845,13 @@ const Reports = () => {
             {suppliers && selectedReport === 'purchase-orders' && (
               <Grid item xs={12} sm={6} md={2}>
                 <FormControl fullWidth>
-                  <InputLabel>Supplier</InputLabel>
+                  <InputLabel>{t('common.supplier')}</InputLabel>
                   <Select
                     value={filters.supplierId}
                     onChange={(e) => handleFilterChange('supplierId', e.target.value)}
-                    label="Supplier"
+                    label={t('common.supplier')}
                   >
-                    <MenuItem value="">All Suppliers</MenuItem>
+                    <MenuItem value="">{t('reports.allSuppliers')}</MenuItem>
                     {suppliers.map((supplier) => (
                       <MenuItem key={supplier.id} value={supplier.id}>
                         {supplier.name}
@@ -862,19 +864,19 @@ const Reports = () => {
             {selectedReport === 'purchase-orders' && (
               <Grid item xs={12} sm={6} md={2}>
                 <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
+                  <InputLabel>{t('common.status')}</InputLabel>
                   <Select
                     value={filters.status}
                     onChange={(e) => handleFilterChange('status', e.target.value)}
-                    label="Status"
+                    label={t('common.status')}
                   >
-                    <MenuItem value="">All Status</MenuItem>
-                    <MenuItem value="draft">Draft</MenuItem>
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="approved">Approved</MenuItem>
-                    <MenuItem value="ordered">Ordered</MenuItem>
-                    <MenuItem value="received">Received</MenuItem>
-                    <MenuItem value="cancelled">Cancelled</MenuItem>
+                    <MenuItem value="">{t('common.allStatus')}</MenuItem>
+                    <MenuItem value="draft">{t('common.draft')}</MenuItem>
+                    <MenuItem value="pending">{t('common.pending')}</MenuItem>
+                    <MenuItem value="approved">{t('common.approved')}</MenuItem>
+                    <MenuItem value="ordered">{t('reports.ordered')}</MenuItem>
+                    <MenuItem value="received">{t('common.received')}</MenuItem>
+                    <MenuItem value="cancelled">{t('common.cancelled')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -898,37 +900,37 @@ const Reports = () => {
 
       {/* Export Dialog */}
       <Dialog open={exportDialog} onClose={() => setExportDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Export Report</DialogTitle>
+        <DialogTitle>{t('reports.exportReport')}</DialogTitle>
         <DialogContent>
           <Typography gutterBottom>
-            Choose export format for {reportTypes.find(r => r.id === selectedReport)?.name} report:
+            {t('reports.chooseExportFormat')} {reportTypes.find(r => r.id === selectedReport)?.name} {t('reports.report')}:
           </Typography>
           <List>
             <ListItem button onClick={() => handleExportFormat('pdf')}>
               <ListItemIcon><Assessment /></ListItemIcon>
               <ListItemText 
-                primary="Export as PDF" 
-                secondary="Portable Document Format - Best for printing and sharing"
+                primary={t('reports.exportAsPDF')} 
+                secondary={t('reports.pdfDescription')}
               />
             </ListItem>
             <ListItem button onClick={() => handleExportFormat('excel')}>
               <ListItemIcon><BarChart /></ListItemIcon>
               <ListItemText 
-                primary="Export as Excel" 
-                secondary="Microsoft Excel format - Best for data analysis"
+                primary={t('reports.exportAsExcel')} 
+                secondary={t('reports.excelDescription')}
               />
             </ListItem>
             <ListItem button onClick={() => handleExportFormat('csv')}>
               <ListItemIcon><BarChart /></ListItemIcon>
               <ListItemText 
-                primary="Export as CSV" 
-                secondary="Comma Separated Values - Best for data import"
+                primary={t('reports.exportAsCSV')} 
+                secondary={t('reports.csvDescription')}
               />
             </ListItem>
           </List>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setExportDialog(false)}>Cancel</Button>
+          <Button onClick={() => setExportDialog(false)}>{t('common.cancel')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

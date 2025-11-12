@@ -247,7 +247,251 @@ BEGIN
 END$$
 DELIMITER ;
 
--- 4. Dashboard Summary Report with Calculations
+-- 4. Inventory Value Report with Profit Calculations
+DROP PROCEDURE IF EXISTS GetInventoryValueReport;
+DELIMITER $$
+CREATE PROCEDURE GetInventoryValueReport(
+    IN p_warehouse_id INT,
+    IN p_category_id INT,
+    IN p_valuation_method VARCHAR(20)
+)
+BEGIN
+    -- Get inventory items with valuation
+    SELECT 
+        s.id,
+        p.id as product_id,
+        p.name as product_name,
+        p.sku as product_sku,
+        COALESCE(c.name, 'Uncategorized') as category,
+        w.name as warehouse,
+        s.quantity,
+        p.cost_price,
+        p.unit_price,
+        (s.quantity * COALESCE(p.cost_price, 0)) as cost_value,
+        (s.quantity * COALESCE(p.unit_price, 0)) as retail_value,
+        CASE 
+            WHEN p.unit_price > 0 AND p.cost_price > 0 THEN 
+                ((p.unit_price - p.cost_price) / p.unit_price) * 100
+            ELSE 0 
+        END as profit_margin,
+        ((s.quantity * COALESCE(p.unit_price, 0)) - (s.quantity * COALESCE(p.cost_price, 0))) as profit_amount
+    FROM stocks s
+    JOIN products p ON s.product_id = p.id
+    LEFT JOIN categories c ON p.category_id = c.id
+    JOIN warehouses w ON s.warehouse_id = w.id
+    WHERE p.is_active = 1
+        AND (p_warehouse_id IS NULL OR s.warehouse_id = p_warehouse_id)
+        AND (p_category_id IS NULL OR p.category_id = p_category_id)
+    ORDER BY 
+        CASE p_valuation_method
+            WHEN 'cost' THEN (s.quantity * COALESCE(p.cost_price, 0))
+            WHEN 'retail' THEN (s.quantity * COALESCE(p.unit_price, 0))
+            ELSE p.name
+        END DESC;
+    
+    -- Get summary statistics
+    SELECT 
+        COUNT(*) as total_products,
+        SUM(s.quantity) as total_quantity,
+        SUM(s.quantity * COALESCE(p.cost_price, 0)) as total_cost_value,
+        SUM(s.quantity * COALESCE(p.unit_price, 0)) as total_retail_value,
+        SUM((s.quantity * COALESCE(p.unit_price, 0)) - (s.quantity * COALESCE(p.cost_price, 0))) as total_profit_amount,
+        CASE 
+            WHEN COUNT(*) > 0 THEN 
+                AVG(CASE 
+                    WHEN p.unit_price > 0 AND p.cost_price > 0 THEN 
+                        ((p.unit_price - p.cost_price) / p.unit_price) * 100
+                    ELSE 0 
+                END)
+            ELSE 0 
+        END as average_profit_margin
+    FROM stocks s
+    JOIN products p ON s.product_id = p.id
+    WHERE p.is_active = 1
+        AND (p_warehouse_id IS NULL OR s.warehouse_id = p_warehouse_id)
+        AND (p_category_id IS NULL OR p.category_id = p_category_id);
+    
+    -- Get category summary
+    SELECT 
+        COALESCE(c.name, 'Uncategorized') as category_name,
+        COUNT(*) as count,
+        SUM(s.quantity) as quantity,
+        SUM(s.quantity * COALESCE(p.cost_price, 0)) as cost_value,
+        SUM(s.quantity * COALESCE(p.unit_price, 0)) as retail_value,
+        SUM((s.quantity * COALESCE(p.unit_price, 0)) - (s.quantity * COALESCE(p.cost_price, 0))) as profit_amount
+    FROM stocks s
+    JOIN products p ON s.product_id = p.id
+    LEFT JOIN categories c ON p.category_id = c.id
+    WHERE p.is_active = 1
+        AND (p_warehouse_id IS NULL OR s.warehouse_id = p_warehouse_id)
+        AND (p_category_id IS NULL OR p.category_id = p_category_id)
+    GROUP BY c.id, c.name
+    ORDER BY category_name;
+    
+    -- Get warehouse summary
+    SELECT 
+        w.name as warehouse_name,
+        COUNT(*) as count,
+        SUM(s.quantity) as quantity,
+        SUM(s.quantity * COALESCE(p.cost_price, 0)) as cost_value,
+        SUM(s.quantity * COALESCE(p.unit_price, 0)) as retail_value
+    FROM stocks s
+    JOIN products p ON s.product_id = p.id
+    JOIN warehouses w ON s.warehouse_id = w.id
+    WHERE p.is_active = 1
+        AND (p_warehouse_id IS NULL OR s.warehouse_id = p_warehouse_id)
+        AND (p_category_id IS NULL OR p.category_id = p_category_id)
+    GROUP BY w.id, w.name
+    ORDER BY warehouse_name;
+END$$
+DELIMITER ;
+
+-- 5. Purchase Orders Report with Performance Metrics
+DROP PROCEDURE IF EXISTS GetPurchaseOrdersReport;
+DELIMITER $$
+CREATE PROCEDURE GetPurchaseOrdersReport(
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME,
+    IN p_supplier_id INT,
+    IN p_warehouse_id INT,
+    IN p_status VARCHAR(20),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT DEFAULT 0;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    -- Get purchase orders data
+    SELECT 
+        po.id,
+        po.order_number,
+        po.order_date,
+        po.status,
+        po.total_amount,
+        po.final_amount,
+        s.name as supplier_name,
+        w.name as warehouse_name,
+        COUNT(poi.id) as item_count,
+        SUM(poi.quantity) as total_quantity,
+        DATEDIFF(COALESCE(po.actual_delivery_date, NOW()), po.order_date) as days_to_receive
+    FROM purchase_orders po
+    LEFT JOIN suppliers s ON po.supplier_id = s.id
+    LEFT JOIN warehouses w ON po.warehouse_id = w.id
+    LEFT JOIN purchase_order_items poi ON po.id = poi.purchase_order_id
+    WHERE po.order_date BETWEEN p_start_date AND p_end_date
+        AND (p_supplier_id IS NULL OR po.supplier_id = p_supplier_id)
+        AND (p_warehouse_id IS NULL OR po.warehouse_id = p_warehouse_id)
+        AND (p_status IS NULL OR po.status = p_status)
+    GROUP BY po.id, po.order_number, po.order_date, po.status, po.total_amount, po.final_amount, s.name, w.name, po.actual_delivery_date
+    ORDER BY po.order_date DESC
+    LIMIT p_limit OFFSET v_offset;
+    
+    -- Get total count
+    SELECT COUNT(*) as total_orders
+    FROM purchase_orders po
+    WHERE po.order_date BETWEEN p_start_date AND p_end_date
+        AND (p_supplier_id IS NULL OR po.supplier_id = p_supplier_id)
+        AND (p_warehouse_id IS NULL OR po.warehouse_id = p_warehouse_id)
+        AND (p_status IS NULL OR po.status = p_status);
+    
+    -- Get summary statistics
+    SELECT 
+        COUNT(*) as total_orders,
+        SUM(COALESCE(po.final_amount, 0)) as total_value,
+        AVG(COALESCE(po.final_amount, 0)) as average_order_value,
+        COUNT(CASE WHEN po.status = 'draft' THEN 1 END) as draft_count,
+        COUNT(CASE WHEN po.status = 'pending' THEN 1 END) as pending_count,
+        COUNT(CASE WHEN po.status = 'approved' THEN 1 END) as approved_count,
+        COUNT(CASE WHEN po.status = 'received' THEN 1 END) as received_count,
+        COUNT(CASE WHEN po.status = 'cancelled' THEN 1 END) as cancelled_count,
+        AVG(CASE WHEN po.actual_delivery_date IS NOT NULL THEN DATEDIFF(po.actual_delivery_date, po.order_date) ELSE NULL END) as avg_days_to_receive
+    FROM purchase_orders po
+    WHERE po.order_date BETWEEN p_start_date AND p_end_date
+        AND (p_supplier_id IS NULL OR po.supplier_id = p_supplier_id)
+        AND (p_warehouse_id IS NULL OR po.warehouse_id = p_warehouse_id)
+        AND (p_status IS NULL OR po.status = p_status);
+    
+    -- Get status summary
+    SELECT 
+        po.status,
+        COUNT(*) as count,
+        SUM(COALESCE(po.final_amount, 0)) as total_value
+    FROM purchase_orders po
+    WHERE po.order_date BETWEEN p_start_date AND p_end_date
+        AND (p_supplier_id IS NULL OR po.supplier_id = p_supplier_id)
+        AND (p_warehouse_id IS NULL OR po.warehouse_id = p_warehouse_id)
+        AND (p_status IS NULL OR po.status = p_status)
+    GROUP BY po.status;
+    
+    -- Get supplier summary
+    SELECT 
+        s.id as supplier_id,
+        s.name as supplier_name,
+        COUNT(po.id) as order_count,
+        SUM(COALESCE(po.final_amount, 0)) as total_value,
+        AVG(COALESCE(po.final_amount, 0)) as average_order_value,
+        AVG(CASE WHEN po.actual_delivery_date IS NOT NULL THEN DATEDIFF(po.actual_delivery_date, po.order_date) ELSE NULL END) as avg_delivery_days
+    FROM purchase_orders po
+    JOIN suppliers s ON po.supplier_id = s.id
+    WHERE po.order_date BETWEEN p_start_date AND p_end_date
+        AND (p_supplier_id IS NULL OR po.supplier_id = p_supplier_id)
+        AND (p_warehouse_id IS NULL OR po.warehouse_id = p_warehouse_id)
+        AND (p_status IS NULL OR po.status = p_status)
+    GROUP BY s.id, s.name
+    ORDER BY total_value DESC;
+END$$
+DELIMITER ;
+
+-- 6. Supplier Performance Report with Delivery Metrics
+DROP PROCEDURE IF EXISTS GetSupplierPerformanceReport;
+DELIMITER $$
+CREATE PROCEDURE GetSupplierPerformanceReport(
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    -- Get supplier performance data
+    SELECT 
+        s.id as supplier_id,
+        s.name as supplier_name,
+        s.email,
+        s.phone,
+        s.rating,
+        COUNT(po.id) as total_orders,
+        SUM(COALESCE(po.final_amount, 0)) as total_order_value,
+        AVG(COALESCE(po.final_amount, 0)) as average_order_value,
+        COUNT(CASE WHEN po.status = 'received' THEN 1 END) as completed_orders,
+        COUNT(CASE WHEN po.status = 'cancelled' THEN 1 END) as cancelled_orders,
+        AVG(CASE WHEN po.actual_delivery_date IS NOT NULL THEN DATEDIFF(po.actual_delivery_date, po.order_date) ELSE NULL END) as avg_delivery_days,
+        COUNT(CASE WHEN po.actual_delivery_date IS NOT NULL AND DATEDIFF(po.actual_delivery_date, po.order_date) <= 7 THEN 1 END) as on_time_deliveries,
+        CASE 
+            WHEN COUNT(po.id) > 0 THEN 
+                (COUNT(CASE WHEN po.actual_delivery_date IS NOT NULL AND DATEDIFF(po.actual_delivery_date, po.order_date) <= 7 THEN 1 END) * 100.0 / COUNT(po.id))
+            ELSE 0 
+        END as on_time_percentage
+    FROM suppliers s
+    LEFT JOIN purchase_orders po ON s.id = po.supplier_id 
+        AND po.order_date BETWEEN p_start_date AND p_end_date
+    WHERE s.is_active = 1
+    GROUP BY s.id, s.name, s.email, s.phone, s.rating
+    ORDER BY total_order_value DESC;
+    
+    -- Get summary statistics
+    SELECT 
+        COUNT(DISTINCT s.id) as total_suppliers,
+        COUNT(DISTINCT CASE WHEN po.id IS NOT NULL THEN s.id END) as active_suppliers,
+        AVG(s.rating) as average_rating,
+        AVG(CASE WHEN po.actual_delivery_date IS NOT NULL THEN DATEDIFF(po.actual_delivery_date, po.order_date) ELSE NULL END) as average_delivery_performance,
+        SUM(COALESCE(po.final_amount, 0)) as total_supplier_value
+    FROM suppliers s
+    LEFT JOIN purchase_orders po ON s.id = po.supplier_id 
+        AND po.order_date BETWEEN p_start_date AND p_end_date
+    WHERE s.is_active = 1;
+END$$
+DELIMITER ;
+
+-- 7. Dashboard Summary Report with Calculations
 DROP PROCEDURE IF EXISTS GetDashboardSummary;
 DELIMITER $$
 CREATE PROCEDURE GetDashboardSummary(

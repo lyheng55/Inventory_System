@@ -23,8 +23,10 @@ import {
   AccountCircle
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
+  const { t } = useTranslation();
   const [tabValue, setTabValue] = useState(0);
   const [formData, setFormData] = useState({
     email: '',
@@ -80,7 +82,7 @@ const Login = () => {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('auth.passwordsDoNotMatch'));
       setLoading(false);
       return;
     }
@@ -116,16 +118,16 @@ const Login = () => {
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Business sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
             <Typography variant="h4" component="h1" gutterBottom>
-              Inventory System
+              {t('auth.inventorySystem')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Real-time inventory management for your business
+              {t('auth.realTimeManagement')}
             </Typography>
           </Box>
 
           <Tabs value={tabValue} onChange={handleTabChange} centered sx={{ mb: 3 }}>
-            <Tab label="Login" />
-            <Tab label="Register" />
+            <Tab label={t('auth.login')} />
+            <Tab label={t('auth.register')} />
           </Tabs>
 
           {error && (
@@ -138,7 +140,7 @@ const Login = () => {
             <Box component="form" onSubmit={handleLogin}>
               <TextField
                 fullWidth
-                label="Username"
+                label={t('auth.username')}
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
@@ -154,7 +156,7 @@ const Login = () => {
               />
               <TextField
                 fullWidth
-                label="Password"
+                label={t('auth.password')}
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
@@ -186,7 +188,7 @@ const Login = () => {
                 sx={{ mt: 3, mb: 2 }}
                 disabled={loading}
               >
-                {loading ? 'Signing In...' : 'Sign In'}
+                {loading ? t('auth.signingIn') : t('auth.loginButton')}
               </Button>
             </Box>
           ) : (
@@ -195,7 +197,7 @@ const Login = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="First Name"
+                    label={t('auth.firstName')}
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
@@ -212,7 +214,7 @@ const Login = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Last Name"
+                    label={t('auth.lastName')}
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
@@ -222,7 +224,7 @@ const Login = () => {
               </Grid>
               <TextField
                 fullWidth
-                label="Username"
+                label={t('auth.username')}
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
@@ -231,7 +233,7 @@ const Login = () => {
               />
               <TextField
                 fullWidth
-                label="Email"
+                label={t('auth.email')}
                 name="email"
                 type="email"
                 value={formData.email}
@@ -248,7 +250,7 @@ const Login = () => {
               />
               <TextField
                 fullWidth
-                label="Password"
+                label={t('auth.password')}
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
@@ -275,7 +277,7 @@ const Login = () => {
               />
               <TextField
                 fullWidth
-                label="Confirm Password"
+                label={t('auth.confirmPassword')}
                 name="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
@@ -307,7 +309,7 @@ const Login = () => {
                 sx={{ mt: 3, mb: 2 }}
                 disabled={loading}
               >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
               </Button>
             </Box>
           )}

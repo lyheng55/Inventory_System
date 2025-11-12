@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 import axios from '../../utils/axios';
 
-const BarcodeScanner = ({ open, onClose, onProductFound, title = "Barcode Scanner" }) => {
+const BarcodeScanner = ({ open, onClose, onProductFound, title = "Barcode Scanner", autoUseProduct = false }) => {
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState('');
   const [scannedProduct, setScannedProduct] = useState(null);
@@ -82,7 +82,9 @@ const BarcodeScanner = ({ open, onClose, onProductFound, title = "Barcode Scanne
 
       if (response.data.success) {
         setScannedProduct(response.data.product);
-        if (onProductFound) {
+        // If autoUseProduct is true, call onProductFound immediately (for POS)
+        // Otherwise, wait for user to click "Use Product" button
+        if (autoUseProduct && onProductFound) {
           onProductFound(response.data.product);
         }
       } else {
@@ -284,8 +286,23 @@ const BarcodeScanner = ({ open, onClose, onProductFound, title = "Barcode Scanne
         <Button onClick={resetScanner} disabled={loading}>
           Reset
         </Button>
-        <Button onClick={handleClose} variant="contained">
-          Close
+        {scannedProduct && (
+          <Button 
+            onClick={() => {
+              if (onProductFound) {
+                onProductFound(scannedProduct);
+              }
+              handleClose();
+            }} 
+            variant="contained"
+            color="success"
+            startIcon={<CheckCircle />}
+          >
+            Use Product
+          </Button>
+        )}
+        <Button onClick={handleClose} variant={scannedProduct ? "outlined" : "contained"}>
+          {scannedProduct ? 'Cancel' : 'Close'}
         </Button>
       </DialogActions>
     </Dialog>

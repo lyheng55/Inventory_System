@@ -10,6 +10,14 @@ const Stock = require('./Stock');
 const PurchaseOrder = require('./PurchaseOrder');
 const PurchaseOrderItem = require('./PurchaseOrderItem');
 const StockMovement = require('./StockMovement');
+const Sale = require('./Sale');
+const SaleItem = require('./SaleItem');
+const Permission = require('./Permission');
+const Role = require('./Role');
+const RolePermission = require('./RolePermission');
+const UserPermission = require('./UserPermission');
+const AuditLog = require('./AuditLog');
+const Unit = require('./Unit');
 
 // Define associations
 
@@ -23,6 +31,7 @@ Product.belongsTo(Category, { foreignKey: 'categoryId' });
 Product.hasMany(Stock, { foreignKey: 'productId' });
 Product.hasMany(PurchaseOrderItem, { foreignKey: 'productId' });
 Product.hasMany(StockMovement, { foreignKey: 'productId' });
+Product.hasMany(SaleItem, { foreignKey: 'productId' });
 
 // Supplier associations
 Supplier.hasMany(PurchaseOrder, { foreignKey: 'supplierId' });
@@ -31,6 +40,7 @@ Supplier.hasMany(PurchaseOrder, { foreignKey: 'supplierId' });
 Warehouse.hasMany(Stock, { foreignKey: 'warehouseId' });
 Warehouse.hasMany(PurchaseOrder, { foreignKey: 'warehouseId' });
 Warehouse.hasMany(StockMovement, { foreignKey: 'warehouseId' });
+Warehouse.hasMany(Sale, { foreignKey: 'warehouseId' });
 Warehouse.belongsTo(User, { as: 'manager', foreignKey: 'managerId' });
 
 // Stock associations
@@ -53,11 +63,44 @@ StockMovement.belongsTo(Product, { foreignKey: 'productId' });
 StockMovement.belongsTo(Warehouse, { foreignKey: 'warehouseId' });
 StockMovement.belongsTo(User, { as: 'performer', foreignKey: 'performedBy' });
 
+// Sale associations
+Sale.belongsTo(Warehouse, { foreignKey: 'warehouseId' });
+Sale.belongsTo(User, { as: 'seller', foreignKey: 'soldBy' });
+Sale.belongsTo(User, { as: 'voider', foreignKey: 'voidedBy' });
+Sale.hasMany(SaleItem, { foreignKey: 'saleId' });
+
+// Sale Item associations
+SaleItem.belongsTo(Sale, { foreignKey: 'saleId' });
+SaleItem.belongsTo(Product, { foreignKey: 'productId' });
+
 // User associations
 User.hasMany(PurchaseOrder, { as: 'createdOrders', foreignKey: 'createdBy' });
 User.hasMany(PurchaseOrder, { as: 'approvedOrders', foreignKey: 'approvedBy' });
 User.hasMany(StockMovement, { as: 'performedMovements', foreignKey: 'performedBy' });
 User.hasMany(Warehouse, { as: 'managedWarehouses', foreignKey: 'managerId' });
+User.hasMany(Sale, { as: 'sales', foreignKey: 'soldBy' });
+User.hasMany(Sale, { as: 'voidedSales', foreignKey: 'voidedBy' });
+User.hasMany(UserPermission, { foreignKey: 'userId' });
+
+// Role associations
+Role.hasMany(RolePermission, { foreignKey: 'roleId' });
+// Note: User.roleId association commented out - still using role ENUM for backward compatibility
+// Role.hasMany(User, { foreignKey: 'roleId' });
+
+// Permission associations
+Permission.hasMany(RolePermission, { foreignKey: 'permissionId' });
+Permission.hasMany(UserPermission, { foreignKey: 'permissionId' });
+
+// RolePermission associations
+RolePermission.belongsTo(Role, { foreignKey: 'roleId' });
+RolePermission.belongsTo(Permission, { foreignKey: 'permissionId' });
+
+// UserPermission associations
+UserPermission.belongsTo(User, { foreignKey: 'userId' });
+UserPermission.belongsTo(Permission, { foreignKey: 'permissionId' });
+
+// AuditLog associations
+AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Export all models
 module.exports = {
@@ -70,7 +113,15 @@ module.exports = {
   Stock,
   PurchaseOrder,
   PurchaseOrderItem,
-  StockMovement
+  StockMovement,
+  Sale,
+  SaleItem,
+  Permission,
+  Role,
+  RolePermission,
+  UserPermission,
+  AuditLog,
+  Unit
 };
 
 // Sync database
